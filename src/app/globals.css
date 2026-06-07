@@ -1,24 +1,6 @@
+/* ds-system.css와 journal.css는 layout.tsx에서 임포트 */
+/* vanilla-extract .css.ts 파일들은 각 컴포넌트가 담당 */
+
 :root {
   --font-sans: "";
-}
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html {
-  height: 100%;
-}
-
-body {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  font-family: var(--font-sans), sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
