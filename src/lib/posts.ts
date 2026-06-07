@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createStaticClient } from "@/lib/supabase/static";
 import type {
   Post,
   PostListItem,
@@ -131,7 +132,8 @@ export async function getRelatedPosts(
 }
 
 export async function getAllPostSlugs(): Promise<string[]> {
-  const supabase = await createClient();
+  // Use cookie-free client: called from generateStaticParams and sitemap at build time
+  const supabase = createStaticClient();
 
   const { data, error } = await supabase
     .from("posts")
