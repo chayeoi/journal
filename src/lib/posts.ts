@@ -4,6 +4,7 @@ import type {
   PostListItem,
   PostSearchParams,
   PaginatedResponse,
+  Category,
 } from "@/types";
 
 const DEFAULT_PAGE_SIZE = 12;
@@ -139,4 +140,61 @@ export async function getAllPostSlugs(): Promise<string[]> {
 
   if (error) return [];
   return (data ?? []).map((p) => p.slug);
+}
+
+// 모든 발행된 포스트 (홈 클라이언트 필터링용)
+export async function getAllPosts(): Promise<PostListItem[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("posts")
+    .select(
+      `id, slug, title, excerpt, cover_image_url, published_at, created_at,
+       author:authors(id, name, avatar_url),
+       category:categories(id, name, slug),
+       tags(id, name, slug)`,
+    )
+    .eq("status", "published")
+    .order("published_at", { ascending: false });
+
+  if (error) throw error;
+  return (data ?? []) as unknown as PostListItem[];
+}
+
+export async function getCategories(): Promise<Category[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("categories")
+    .select("id, name, slug, description")
+    .order("name");
+  if (error) throw error;
+  return (data ?? []) as Category[];
+}
+
+// 관련 포스트 스코어링: 같은 카테고리 +3 / 같은 저자 +1 / 공유 태그당 +2
+export function scoreRelatedPosts(
+  current: Post,
+  candidates: PostListItem[],
+  limit = 3,
+): PostListItem[] {
+  const currentTagSlugs = current.tags?.map((t) => t.slug) ?? [];
+
+  const scored = candidates
+    .filter((p) => p.id !== current.id)
+    .map((p) => {
+      let score = 0;
+      if (p.category?.id === current.category_id) score += 3;
+      if (p.author?.id === current.author_id) score += 1;
+      const pTagSlugs = p.tags?.map((t) => t.slug) ?? [];
+      score += pTagSlugs.filter((t) => currentTagSlugs.includes(t)).length * 2;
+      return { p, score };
+    });
+
+  scored.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    const da = a.p.published_at ?? a.p.created_at;
+    const db = b.p.published_at ?? b.p.created_at;
+    return db.localeCompare(da);
+  });
+
+  return scored.slice(0, limit).map((x) => x.p);
 }
