@@ -1,15 +1,9 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  getPostBySlug,
-  getAllPostSlugs,
-  getAllPosts,
-  scoreRelatedPosts,
-} from "@/lib/posts";
+import { getPostById, getAllPostIds, getRelatedPosts } from "@/lib/posts";
 import { buildPostMetadata, buildPostJsonLd } from "@/lib/metadata";
 import { extractHeadings, injectHeadingIds } from "@/utils/toc";
-import { calcReadingTime } from "@/utils/reading-time";
 import { fmtDate } from "@/utils/format";
 import { ICON } from "@/utils/icons";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -21,36 +15,38 @@ import { TweaksPanel } from "@/components/TweaksPanel";
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateStaticParams() {
-  const slugs = await getAllPostSlugs();
-  return slugs.map((slug) => ({ slug }));
+  const ids = await getAllPostIds();
+  return ids.map((id) => ({ slug: id }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getPostBySlug(slug);
+  const post = await getPostById(slug);
   if (!post) return {};
   return buildPostMetadata(post);
 }
 
 export default async function PostPage({ params }: Props) {
   const { slug } = await params;
-  const [post, allPosts] = await Promise.all([
-    getPostBySlug(slug),
-    getAllPosts(),
-  ]);
+  const post = await getPostById(slug);
   if (!post) notFound();
 
-  const relatedPosts = scoreRelatedPosts(post, allPosts, 3);
+  const relatedPosts = await getRelatedPosts(post.id, post.tags ?? [], post.author_id, post.category, 3);
   const headings = extractHeadings(post.content);
   const processedContent = injectHeadingIds(post.content);
-  const readingTime = calcReadingTime(post.content);
+  const readingTime = post.reading_minutes ?? 1;
   const jsonLd = buildPostJsonLd(post);
 
-  const authorInitials = post.author?.name?.charAt(0) ?? "A";
+  const authorName = post.author?.display_name ?? "AUCTORITAS";
 
   return (
     <>
-      <PageInit page="detail" />
+      <PageInit page="detail" cover="overlay" />
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `document.documentElement.setAttribute("data-cover","overlay");`,
+        }}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -64,7 +60,9 @@ export default async function PostPage({ params }: Props) {
           <span aria-hidden="true">›</span>
           {post.category && (
             <>
-              <Link href={`/?cat=${post.category.slug}`}>{post.category.name}</Link>
+              <Link href={`/?cat=${encodeURIComponent(post.category)}`}>
+                {post.category}
+              </Link>
               <span aria-hidden="true">›</span>
             </>
           )}
@@ -72,21 +70,34 @@ export default async function PostPage({ params }: Props) {
         </nav>
 
         <header className="arthead">
-          {post.category && (
-            <p className="eyebrow arthead__cat">{post.category.name}</p>
-          )}
-          <h1 className="arthead__title">{post.title}</h1>
-          <div className="arthead__meta">
-            <span className="artmeta__sub">
-              {post.published_at && (
-                <time dateTime={post.published_at}>
-                  {fmtDate(post.published_at, "long")}
-                </time>
-              )}
-              <span className="dotsep">·</span>
-              읽는 데 {readingTime}분
-            </span>
+          <div className="arthead__text">
+            {post.category && (
+              <p className="eyebrow arthead__cat">{post.category}</p>
+            )}
+            <h1 className="arthead__title">{post.title}</h1>
+            <div className="arthead__meta">
+              <span className="artmeta__sub">
+                {post.published_at && (
+                  <time dateTime={post.published_at}>
+                    {fmtDate(post.published_at, "long")}
+                  </time>
+                )}
+                <span className="dotsep">·</span>
+                읽는 데 {readingTime}분
+              </span>
+            </div>
           </div>
+          {post.thumbnail_url && (
+            <figure className="artcover">
+              <img
+                src={post.thumbnail_url}
+                alt=""
+                width={1600}
+                height={900}
+                loading="eager"
+              />
+            </figure>
+          )}
         </header>
 
         <div className="artbody">
@@ -113,29 +124,41 @@ export default async function PostPage({ params }: Props) {
             />
 
             <div className="artfoot">
-              <div className="artfoot__tags">
-                {post.tags?.map((t) => (
-                  <Link
-                    key={t.slug}
-                    className="ptag"
-                    href={`/?tag=${t.slug}`}
-                  >
-                    {t.name}
-                  </Link>
-                ))}
-              </div>
+              {(post.tags ?? []).length > 0 && (
+                <div className="artfoot__tags">
+                  {post.tags.map((t) => (
+                    <Link
+                      key={t}
+                      className="ptag"
+                      href={`/?tag=${encodeURIComponent(t)}`}
+                    >
+                      {t}
+                    </Link>
+                  ))}
+                </div>
+              )}
 
               {post.author && (
                 <div className="authorbox">
-                  <span
-                    className="avatar avatar--accent"
-                    style={{ width: 56, height: 56, fontSize: 24, fontWeight: 700 }}
-                    aria-hidden="true"
-                  >
-                    {authorInitials}
-                  </span>
+                  {post.author.avatar_url ? (
+                    <img
+                      src={post.author.avatar_url}
+                      alt={authorName}
+                      width={56}
+                      height={56}
+                      style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+                    />
+                  ) : (
+                    <span
+                      className="avatar avatar--accent"
+                      style={{ width: 56, height: 56, fontSize: 24, fontWeight: 700 }}
+                      aria-hidden="true"
+                    >
+                      {authorName.charAt(0)}
+                    </span>
+                  )}
                   <div>
-                    <div className="authorbox__name">AUCTORITAS</div>
+                    <div className="authorbox__name">{authorName}</div>
                     {post.author.bio && (
                       <p className="authorbox__bio">{post.author.bio}</p>
                     )}
@@ -183,21 +206,41 @@ export default async function PostPage({ params }: Props) {
             </div>
             <div className="cardgrid">
               {relatedPosts.map((rp) => (
-                <article key={rp.id} className="pcard" data-cat={rp.category?.slug ?? ""}>
-                  <a className="pcard__link" href={`/posts/${rp.slug}`} aria-label={rp.title}>
+                <article key={rp.id} className="pcard" data-cat={rp.category ?? ""}>
+                  <a className="pcard__link" href={`/posts/${rp.id}`} aria-label={rp.title}>
                     <span className="pcard__thumb">
-                      {rp.cover_image_url && (
-                        <img src={rp.cover_image_url} alt="" loading="lazy" width={1600} height={900} />
+                      {rp.thumbnail_url && (
+                        <img src={rp.thumbnail_url} alt="" loading="lazy" width={1600} height={900} />
                       )}
-                      <span className="pcard__cat eyebrow">{rp.category?.name ?? ""}</span>
+                      {rp.category && (
+                        <span className="pcard__cat eyebrow">{rp.category}</span>
+                      )}
                     </span>
                     <span className="pcard__body">
                       <h3 className="pcard__title">{rp.title}</h3>
                       {rp.excerpt && <p className="pcard__excerpt">{rp.excerpt}</p>}
                       <span className="pcard__foot">
-                        <span className="avatar" style={{ width: 24, height: 24, fontSize: 11 }} aria-hidden="true" />
+                        {rp.author?.avatar_url ? (
+                          <img
+                            src={rp.author.avatar_url}
+                            alt={rp.author.display_name}
+                            width={24}
+                            height={24}
+                            style={{ width: 24, height: 24, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+                          />
+                        ) : (
+                          <span
+                            className="avatar avatar--accent"
+                            style={{ width: 24, height: 24, fontSize: 11, fontWeight: 700 }}
+                            aria-hidden="true"
+                          >
+                            {(rp.author?.display_name ?? "A").charAt(0)}
+                          </span>
+                        )}
                         <span className="pcard__who">
-                          <span className="pcard__by">AUCTORITAS</span>
+                          <span className="pcard__by">
+                            {rp.author?.display_name ?? "AUCTORITAS"}
+                          </span>
                         </span>
                         <span className="pcard__metaline">
                           {rp.published_at && (
@@ -226,7 +269,7 @@ export default async function PostPage({ params }: Props) {
           display: flex; align-items: center; justify-content: space-between;
           gap: 24px; flex-wrap: wrap;
           padding: 26px 28px; margin-top: 32px;
-          border: 1px solid var(--line); border-radius: var(--r-card);
+          border-radius: var(--r-card);
           background: var(--surface-2);
         }
         .consult-note__t { font-size: 16px; font-weight: 800; color: var(--ink); letter-spacing: -0.02em; }

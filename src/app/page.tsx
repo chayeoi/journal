@@ -1,4 +1,4 @@
-import { getAllPosts, getCategories } from "@/lib/posts";
+import { getPosts, getCategoryCounts, getArchiveDates, getFeaturedPosts } from "@/lib/posts";
 import { buildSiteJsonLd } from "@/lib/metadata";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -15,17 +15,25 @@ export const metadata: Metadata = {
 };
 
 interface Props {
-  searchParams: Promise<{ cat?: string; tag?: string }>;
+  searchParams: Promise<{ cat?: string; tag?: string; q?: string; archive?: string }>;
 }
 
 export default async function HomePage({ searchParams }: Props) {
   const sp = await searchParams;
-  const [allPosts, categories] = await Promise.all([
-    getAllPosts(),
-    getCategories(),
+
+  const [result, categoryCounts, archiveDates, featuredPosts] = await Promise.all([
+    getPosts({
+      category: sp.cat,
+      tag: sp.tag,
+      query: sp.q,
+      archive: sp.archive,
+    }),
+    getCategoryCounts(),
+    getArchiveDates(),
+    getFeaturedPosts(),
   ]);
 
-  const featuredPosts = allPosts.slice(0, 5);
+  const { posts, total, hasMore } = result;
   const jsonLd = buildSiteJsonLd();
 
   return (
@@ -57,10 +65,17 @@ export default async function HomePage({ searchParams }: Props) {
         <FeaturedCarousel posts={featuredPosts} />
 
         <ArticleList
-          posts={allPosts}
-          categories={categories}
-          initialCat={sp.cat}
-          initialTag={sp.tag}
+          initialPosts={posts}
+          total={total}
+          hasMore={hasMore}
+          categoryCounts={categoryCounts}
+          archiveDates={archiveDates}
+          filters={{
+            cat: sp.cat ?? "",
+            tag: sp.tag ?? "",
+            q: sp.q ?? "",
+            archive: sp.archive ?? "",
+          }}
         />
       </main>
 

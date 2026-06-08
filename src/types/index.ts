@@ -1,73 +1,77 @@
-export type PostStatus = "draft" | "published";
-
-export type Post = {
+export type Profile = {
   id: string;
-  slug: string;
-  title: string;
-  excerpt: string | null;
-  content: string;
-  cover_image_url: string | null;
-  author_id: string;
-  category_id: string | null;
-  status: PostStatus;
-  published_at: string | null;
-  created_at: string;
-  updated_at: string;
-  author?: Author;
-  category?: Category;
-  tags?: Tag[];
-};
-
-export type Author = {
-  id: string;
-  name: string;
+  display_name: string;
   bio: string | null;
   avatar_url: string | null;
 };
 
-export type Category = {
+export type Post = {
   id: string;
-  name: string;
-  slug: string;
-  description: string | null;
+  title: string;
+  content: string;
+  excerpt: string | null;
+  reading_minutes: number | null;
+  thumbnail_url: string | null;
+  author_id: string | null;
+  category: string | null;
+  status: string;
+  is_visible: boolean;
+  published_at: string | null;
+  scheduled_at: string | null;
+  created_at: string;
+  updated_at: string;
+  tags: string[];
+  author?: Profile;
 };
 
-export type Tag = {
+export type PostListItem = {
   id: string;
-  name: string;
-  slug: string;
+  title: string;
+  thumbnail_url: string | null;
+  author_id: string | null;
+  category: string | null;
+  published_at: string | null;
+  created_at: string;
+  tags: string[];
+  excerpt: string | null;
+  reading_minutes: number | null;
+  author?: Pick<Profile, "id" | "display_name" | "avatar_url">;
 };
 
-export type PostListItem = Pick<
-  Post,
-  | "id"
-  | "slug"
-  | "title"
-  | "excerpt"
-  | "cover_image_url"
-  | "published_at"
-  | "created_at"
-> & {
-  author?: Pick<Author, "id" | "name" | "avatar_url">;
-  category?: Pick<Category, "id" | "name" | "slug">;
-  tags?: Pick<Tag, "id" | "name" | "slug">[];
-};
+export const CATEGORY_ORDER = [
+  "공사대금",
+  "임대차",
+  "부동산매매",
+  "상속",
+  "행정",
+  "재개발·재건축",
+  "가사·가족",
+  "AI·디지털",
+  "명도·인도",
+  "기타",
+] as const;
 
-export type PaginatedResponse<T> = {
-  data: T[];
+export type PostsResult = {
+  posts: PostListItem[];
   total: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
+  hasMore: boolean;
+};
+
+export type CategoryCount = {
+  category: string;
+  count: number;
+};
+
+export type ArchiveDate = {
+  key: string;
+  label: string;
+  count: number;
 };
 
 export type PostSearchParams = {
-  query?: string;
   category?: string;
   tag?: string;
-  author?: string;
+  query?: string;
+  archive?: string; // "YYYY-MM"
   page?: number;
-  pageSize?: number;
-  year?: number;
-  month?: number;
 };

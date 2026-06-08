@@ -52,42 +52,47 @@ export function buildSiteJsonLd() {
   };
 }
 
+function getExcerpt(content: string, maxLen = 160): string {
+  return content.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, maxLen);
+}
+
 export function buildPostMetadata(post: Post): Metadata {
+  const excerpt = getExcerpt(post.content);
   return {
     title: post.title,
-    description: post.excerpt ?? undefined,
+    description: excerpt || undefined,
     openGraph: {
       type: "article",
       title: post.title,
-      description: post.excerpt ?? undefined,
-      images: post.cover_image_url ? [post.cover_image_url] : [],
+      description: excerpt || undefined,
+      images: post.thumbnail_url ? [post.thumbnail_url] : [],
       locale: "ko_KR",
       siteName: SITE_NAME,
     },
     alternates: {
-      canonical: `${SITE_URL}/posts/${post.slug}`,
+      canonical: `${SITE_URL}/posts/${post.id}`,
     },
   };
 }
 
 export function buildPostJsonLd(post: Post) {
+  const excerpt = getExcerpt(post.content);
   return {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "BlogPosting",
         headline: post.title,
-        description: post.excerpt,
-        image: post.cover_image_url,
+        description: excerpt || undefined,
+        image: post.thumbnail_url ?? undefined,
         datePublished: post.published_at,
         dateModified: post.updated_at,
         inLanguage: "ko",
-        articleSection: post.category?.name,
-        keywords: post.tags?.map((t) => t.name).join(", "),
+        keywords: (post.tags ?? []).join(", ") || undefined,
         author: post.author
           ? {
               "@type": "Person",
-              name: post.author.name,
+              name: post.author.display_name,
               worksFor: { "@type": "Organization", name: "AUCTORITAS LAB" },
             }
           : undefined,
@@ -98,23 +103,15 @@ export function buildPostJsonLd(post: Post) {
         },
         mainEntityOfPage: {
           "@type": "WebPage",
-          "@id": `${SITE_URL}/posts/${post.slug}`,
+          "@id": `${SITE_URL}/posts/${post.id}`,
         },
       },
       {
         "@type": "BreadcrumbList",
         itemListElement: [
           { "@type": "ListItem", position: 1, name: "홈", item: SITE_URL },
-          post.category
-            ? {
-                "@type": "ListItem",
-                position: 2,
-                name: post.category.name,
-                item: `${SITE_URL}/?cat=${post.category.slug}`,
-              }
-            : null,
-          { "@type": "ListItem", position: 3, name: post.title },
-        ].filter((x): x is NonNullable<typeof x> => x !== null),
+          { "@type": "ListItem", position: 2, name: post.title },
+        ],
       },
     ],
   };

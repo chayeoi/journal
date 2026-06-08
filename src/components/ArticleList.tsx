@@ -1,181 +1,161 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
-import type { PostListItem, Category } from "@/types";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import type { PostListItem, CategoryCount, ArchiveDate } from "@/types";
 import { ICON } from "@/utils/icons";
 import { fmtDate } from "@/utils/format";
-import { calcReadingTime } from "@/utils/reading-time";
 
-interface FilterState {
-  q: string;
+interface Filters {
   cat: string;
-  tags: string[];
+  tag: string;
+  q: string;
   archive: string;
-  sort: "new" | "old";
-}
-
-interface ArchiveItem {
-  key: string;
-  label: string;
-  count: number;
 }
 
 interface Props {
-  posts: PostListItem[];
-  categories: Category[];
-  initialCat?: string;
-  initialTag?: string;
+  initialPosts: PostListItem[];
+  total: number;
+  hasMore: boolean;
+  categoryCounts: CategoryCount[];
+  archiveDates: ArchiveDate[];
+  filters: Filters;
 }
 
 type ActiveChip = { type: string; val?: string; label: string };
 
-export function ArticleList({ posts, categories, initialCat, initialTag }: Props) {
-  const [state, setState] = useState<FilterState>({
-    q: "",
-    cat: initialCat ?? "all",
-    tags: initialTag ? [initialTag] : [],
-    archive: "all",
-    sort: "new",
-  });
+export function ArticleList({
+  initialPosts,
+  total,
+  hasMore: initialHasMore,
+  categoryCounts,
+  archiveDates,
+  filters,
+}: Props) {
+  const router = useRouter();
+  const [posts, setPosts] = useState(initialPosts);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [localQ, setLocalQ] = useState(filters.q);
+  const [fmoreOpen, setFmoreOpen] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  const allTags = useMemo(() => {
-    const m = new Map<string, { slug: string; name: string; count: number }>();
-    posts.forEach((p) =>
-      p.tags?.forEach((t) => {
-        const e = m.get(t.slug);
-        if (e) e.count++;
-        else m.set(t.slug, { slug: t.slug, name: t.name, count: 1 });
-      }),
-    );
-    return Array.from(m.values()).sort((a, b) => b.count - a.count);
-  }, [posts]);
-
-  const archiveDates = useMemo<ArchiveItem[]>(() => {
-    const m = new Map<string, number>();
-    posts.forEach((p) => {
-      if (!p.published_at) return;
-      const key = p.published_at.slice(0, 7);
-      m.set(key, (m.get(key) ?? 0) + 1);
-    });
-    return Array.from(m.entries())
-      .sort(([a], [b]) => b.localeCompare(a))
-      .map(([key, count]) => {
-        const [y, mo] = key.split("-");
-        return { key, label: `${y}년 ${parseInt(mo)}월`, count };
-      });
-  }, [posts]);
-
-  const catCount = useCallback(
-    (slug: string) => posts.filter((p) => p.category?.slug === slug).length,
-    [posts],
-  );
-
-  const filtered = useMemo(() => {
-    const q = state.q.trim().toLowerCase();
-    return posts
-      .filter((p) => {
-        if (state.cat !== "all" && p.category?.slug !== state.cat) return false;
-        if (state.archive !== "all") {
-          if (!p.published_at || !p.published_at.startsWith(state.archive))
-            return false;
-        }
-        if (state.tags.length) {
-          const pSlugs = p.tags?.map((t) => t.slug) ?? [];
-          if (!state.tags.every((t) => pSlugs.includes(t))) return false;
-        }
-        if (q) {
-          const hay = [
-            p.title,
-            p.excerpt ?? "",
-            p.tags?.map((t) => t.name).join(" ") ?? "",
-            p.author?.name ?? "",
-            p.category?.name ?? "",
-          ]
-            .join(" ")
-            .toLowerCase();
-          if (!hay.includes(q)) return false;
-        }
-        return true;
-      })
-      .sort((a, b) => {
-        const da = a.published_at ?? a.created_at;
-        const db = b.published_at ?? b.created_at;
-        return state.sort === "new"
-          ? db.localeCompare(da)
-          : da.localeCompare(db);
-      });
-  }, [posts, state]);
-
-  const syncURL = useCallback((s: FilterState) => {
-    const p = new URLSearchParams();
-    if (s.cat !== "all") p.set("cat", s.cat);
-    if (s.tags.length === 1) p.set("tag", s.tags[0]);
-    const qs = p.toString();
-    window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
-  }, []);
-
-  const update = useCallback(
-    (patch: Partial<FilterState>) => {
-      setState((prev) => {
-        const next = { ...prev, ...patch };
-        syncURL(next);
-        return next;
-      });
-    },
-    [syncURL],
-  );
+  // 서버에서 새 initialPosts가 오면 (필터 변경) 상태 리셋
+  useEffect(() => {
+    setPosts(initialPosts);
+    setHasMore(initialHasMore);
+    setPage(1);
+  }, [initialPosts, initialHasMore]);
 
   useEffect(() => {
-    const el = document.getElementById("ld-list");
-    if (!el) return;
-    const data = {
-      "@context": "https://schema.org",
-      "@type": "ItemList",
-      name: "AUCTORITAS LAB 아티클",
-      numberOfItems: filtered.length,
-      itemListElement: filtered.slice(0, 20).map((p, i) => ({
-        "@type": "ListItem",
-        position: i + 1,
-        url: `${window.location.origin}/posts/${p.slug}`,
-        name: p.title,
-      })),
-    };
-    el.textContent = JSON.stringify(data);
-  }, [filtered]);
-
-  const activeChips = useMemo<ActiveChip[]>(() => {
-    const chips: ActiveChip[] = [];
-    if (state.cat !== "all") {
-      const cat = categories.find((c) => c.slug === state.cat);
-      if (cat) chips.push({ type: "cat", label: cat.name });
-    }
-    if (state.archive !== "all") {
-      const arc = archiveDates.find((a) => a.key === state.archive);
-      if (arc) chips.push({ type: "archive", label: arc.label });
-    }
-    state.tags.forEach((t) => {
-      const tag = allTags.find((a) => a.slug === t);
-      chips.push({ type: "tag", val: t, label: `#${tag?.name ?? t}` });
-    });
-    if (state.q.trim()) chips.push({ type: "q", label: `"${state.q.trim()}"` });
-    return chips;
-  }, [state, categories, archiveDates, allTags]);
-
-  function clearChip(type: string, val?: string) {
-    if (type === "cat") update({ cat: "all" });
-    else if (type === "archive") update({ archive: "all" });
-    else if (type === "q") update({ q: "" });
-    else if (type === "tag" && val) {
-      update({ tags: state.tags.filter((t) => t !== val) });
-    }
-  }
-
-  const [fmoreOpen, setFmoreOpen] = useState(false);
+    setLocalQ(filters.q);
+  }, [filters.q]);
 
   useEffect(() => {
     if (fmoreOpen) document.documentElement.setAttribute("data-fmore", "open");
     else document.documentElement.removeAttribute("data-fmore");
   }, [fmoreOpen]);
+
+  // JSON-LD ItemList 업데이트
+  useEffect(() => {
+    const el = document.getElementById("ld-list");
+    if (!el) return;
+    el.textContent = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      name: "AUCTORITAS LAB 아티클",
+      numberOfItems: total,
+      itemListElement: posts.slice(0, 20).map((p, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        url: `${window.location.origin}/posts/${p.id}`,
+        name: p.title,
+      })),
+    });
+  }, [posts, total]);
+
+  const buildURL = useCallback(
+    (patch: Partial<Filters>) => {
+      const merged = { ...filters, ...patch };
+      const params = new URLSearchParams();
+      if (merged.cat) params.set("cat", merged.cat);
+      if (merged.tag) params.set("tag", merged.tag);
+      if (merged.q) params.set("q", merged.q);
+      if (merged.archive) params.set("archive", merged.archive);
+      const qs = params.toString();
+      return qs ? `/?${qs}` : "/";
+    },
+    [filters],
+  );
+
+  const navigate = useCallback(
+    (patch: Partial<Filters>) => {
+      router.replace(buildURL(patch), { scroll: false });
+    },
+    [buildURL, router],
+  );
+
+  const handleQChange = (value: string) => {
+    setLocalQ(value);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => navigate({ q: value }), 400);
+  };
+
+  const loadMore = async () => {
+    setLoadingMore(true);
+    const nextPage = page + 1;
+    const params = new URLSearchParams();
+    if (filters.cat) params.set("cat", filters.cat);
+    if (filters.tag) params.set("tag", filters.tag);
+    if (filters.q) params.set("q", filters.q);
+    if (filters.archive) params.set("archive", filters.archive);
+    params.set("page", String(nextPage));
+    try {
+      const res = await fetch(`/api/posts?${params}`);
+      const data = await res.json();
+      setPosts((prev) => [...prev, ...data.posts]);
+      setHasMore(data.hasMore);
+      setPage(nextPage);
+    } catch {
+      // 실패 시 현재 상태 유지
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  // 로드된 포스트에서 태그 집계 (사이드바용)
+  const allTags = useMemo(() => {
+    const m = new Map<string, number>();
+    posts.forEach((p) => (p.tags ?? []).forEach((t) => m.set(t, (m.get(t) ?? 0) + 1)));
+    return Array.from(m.entries())
+      .sort(([, a], [, b]) => b - a)
+      .map(([tag]) => tag);
+  }, [posts]);
+
+  const activeChips = useMemo<ActiveChip[]>(() => {
+    const chips: ActiveChip[] = [];
+    if (filters.cat) chips.push({ type: "cat", label: filters.cat });
+    if (filters.archive) {
+      const arc = archiveDates.find((a) => a.key === filters.archive);
+      if (arc) chips.push({ type: "archive", label: arc.label });
+    }
+    if (filters.tag) chips.push({ type: "tag", val: filters.tag, label: `#${filters.tag}` });
+    if (filters.q.trim()) chips.push({ type: "q", label: `"${filters.q.trim()}"` });
+    return chips;
+  }, [filters, archiveDates]);
+
+  function clearChip(type: string, val?: string) {
+    if (type === "cat") navigate({ cat: "" });
+    else if (type === "archive") navigate({ archive: "" });
+    else if (type === "q") { setLocalQ(""); navigate({ q: "" }); }
+    else if (type === "tag" && val) navigate({ tag: "" });
+  }
+
+  function clearAll() {
+    setLocalQ("");
+    navigate({ cat: "", tag: "", q: "", archive: "" });
+  }
 
   return (
     <section className="wrap home-articles" id="articles" aria-label="아티클">
@@ -187,9 +167,9 @@ export function ArticleList({ posts, categories, initialCat, initialTag }: Props
               id="q"
               type="search"
               placeholder="키워드로 검색 (예: 유치권, 권리금)"
-              value={state.q}
+              value={localQ}
               aria-label="키워드 검색"
-              onChange={(e) => update({ q: e.target.value })}
+              onChange={(e) => handleQChange(e.target.value)}
             />
           </div>
 
@@ -197,10 +177,10 @@ export function ArticleList({ posts, categories, initialCat, initialTag }: Props
             <select
               id="bar-archive"
               aria-label="기간"
-              value={state.archive}
-              onChange={(e) => update({ archive: e.target.value })}
+              value={filters.archive}
+              onChange={(e) => navigate({ archive: e.target.value })}
             >
-              <option value="all">전체 기간</option>
+              <option value="">전체 기간</option>
               {archiveDates.map((a) => (
                 <option key={a.key} value={a.key}>{a.label}</option>
               ))}
@@ -210,22 +190,19 @@ export function ArticleList({ posts, categories, initialCat, initialTag }: Props
           <div className="fgroup fgroup--cat">
             <div className="fgroup__label">카테고리</div>
             <div className="fcat">
-              <button
-                data-cat="all"
-                aria-pressed={state.cat === "all"}
-                onClick={() => update({ cat: "all" })}
-              >
-                전체<span className="fcat__count">{posts.length}</span>
-              </button>
-              {categories.map((c) => (
+              {categoryCounts.map((c) => (
                 <button
-                  key={c.id}
-                  data-cat={c.slug}
-                  aria-pressed={state.cat === c.slug}
-                  onClick={() => update({ cat: c.slug })}
+                  key={c.category}
+                  data-cat={c.category}
+                  aria-pressed={
+                    c.category === "all" ? !filters.cat : filters.cat === c.category
+                  }
+                  onClick={() =>
+                    navigate({ cat: c.category === "all" ? "" : c.category })
+                  }
                 >
-                  {c.name}
-                  <span className="fcat__count">{catCount(c.slug)}</span>
+                  {c.category === "all" ? "전체" : c.category}
+                  <span className="fcat__count">{c.count}</span>
                 </button>
               ))}
             </div>
@@ -244,58 +221,52 @@ export function ArticleList({ posts, categories, initialCat, initialTag }: Props
           </button>
 
           <div className="fmore" id="fmore">
-            <div className="fgroup fgroup--tags">
-              <div className="fgroup__label">태그</div>
-              <div className="fchips">
-                {allTags.map((t) => (
-                  <button
-                    key={t.slug}
-                    className="fchip"
-                    data-tag={t.slug}
-                    aria-pressed={state.tags.includes(t.slug)}
-                    onClick={() => {
-                      const i = state.tags.indexOf(t.slug);
-                      update({
-                        tags:
-                          i > -1
-                            ? state.tags.filter((x) => x !== t.slug)
-                            : [...state.tags, t.slug],
-                      });
-                    }}
-                  >
-                    {t.name}
-                  </button>
-                ))}
+            {allTags.length > 0 && (
+              <div className="fgroup fgroup--tags">
+                <div className="fgroup__label">태그</div>
+                <div className="fchips">
+                  {allTags.map((t) => (
+                    <button
+                      key={t}
+                      className="fchip"
+                      data-tag={t}
+                      aria-pressed={filters.tag === t}
+                      onClick={() => navigate({ tag: filters.tag === t ? "" : t })}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="fgroup fgroup--archive">
-              <div className="fgroup__label">아카이브</div>
-              <div className="farchive">
-                {archiveDates.map((a) => (
-                  <button
-                    key={a.key}
-                    data-archive={a.key}
-                    aria-pressed={state.archive === a.key}
-                    onClick={() =>
-                      update({
-                        archive: state.archive === a.key ? "all" : a.key,
-                      })
-                    }
-                  >
-                    {a.label}
-                    <span className="farchive__count">{a.count}</span>
-                  </button>
-                ))}
+            {archiveDates.length > 0 && (
+              <div className="fgroup fgroup--archive">
+                <div className="fgroup__label">아카이브</div>
+                <div className="farchive">
+                  {archiveDates.map((a) => (
+                    <button
+                      key={a.key}
+                      data-archive={a.key}
+                      aria-pressed={filters.archive === a.key}
+                      onClick={() =>
+                        navigate({ archive: filters.archive === a.key ? "" : a.key })
+                      }
+                    >
+                      {a.label}
+                      <span className="farchive__count">{a.count}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </aside>
 
         <section className="results" aria-live="polite">
           <div className="results__bar">
             <div className="results__count">
-              <b>총 {filtered.length}</b>건의 아티클
+              <b>총 {total}</b>건의 아티클
             </div>
             {activeChips.length > 0 && (
               <div className="results__active">
@@ -311,24 +282,34 @@ export function ArticleList({ posts, categories, initialCat, initialTag }: Props
                     </svg>
                   </button>
                 ))}
-                <button
-                  className="results__clear"
-                  onClick={() =>
-                    update({ q: "", cat: "all", tags: [], archive: "all" })
-                  }
-                >
+                <button className="results__clear" onClick={clearAll}>
                   모두 지우기
                 </button>
               </div>
             )}
           </div>
 
-          {filtered.length > 0 ? (
-            <div className="cardgrid">
-              {filtered.map((post) => (
-                <PostCard key={post.id} post={post} />
-              ))}
-            </div>
+          {posts.length > 0 ? (
+            <>
+              <div className="cardgrid">
+                {posts.map((post) => (
+                  <PostCard key={post.id} post={post} />
+                ))}
+              </div>
+
+              {hasMore && (
+                <div style={{ display: "flex", justifyContent: "center", paddingTop: 40 }}>
+                  <button
+                    className="loadmore-btn"
+                    onClick={loadMore}
+                    disabled={loadingMore}
+                    aria-label="아티클 더 보기"
+                  >
+                    {loadingMore ? "불러오는 중…" : "더 보기"}
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="empty">
               <h3>조건에 맞는 아티클이 없어요</h3>
@@ -337,24 +318,45 @@ export function ArticleList({ posts, categories, initialCat, initialTag }: Props
           )}
         </section>
       </div>
+
+      <style>{`
+        .loadmore-btn {
+          padding: 12px 32px;
+          font-size: 14px;
+          font-weight: 700;
+          color: var(--ink);
+          background: var(--surface-2);
+          border: 1.5px solid var(--border);
+          border-radius: var(--r-btn);
+          cursor: pointer;
+          transition: background var(--d) var(--ease), border-color var(--d) var(--ease);
+        }
+        .loadmore-btn:hover:not(:disabled) {
+          background: var(--accent);
+          border-color: var(--accent);
+          color: #fff;
+        }
+        .loadmore-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      `}</style>
     </section>
   );
 }
 
 function PostCard({ post }: { post: PostListItem }) {
   const tags = (post.tags ?? []).slice(0, 3);
-  const readingTime = calcReadingTime(post.excerpt ?? "");
-  const dateStr = post.published_at
-    ? fmtDate(post.published_at, "short")
-    : "";
+  const readingTime = post.reading_minutes ?? 1;
+  const dateStr = post.published_at ? fmtDate(post.published_at, "short") : "";
 
   return (
-    <article className="pcard" data-cat={post.category?.slug ?? ""}>
-      <a className="pcard__link" href={`/posts/${post.slug}`} aria-label={post.title}>
+    <article className="pcard" data-cat={post.category ?? ""}>
+      <a className="pcard__link" href={`/posts/${post.id}`} aria-label={post.title}>
         <span className="pcard__thumb">
-          {post.cover_image_url ? (
+          {post.thumbnail_url ? (
             <img
-              src={post.cover_image_url}
+              src={post.thumbnail_url}
               alt=""
               loading="lazy"
               width={1600}
@@ -363,27 +365,45 @@ function PostCard({ post }: { post: PostListItem }) {
           ) : (
             <div style={{ width: "100%", height: "100%", background: "var(--surface-2)" }} />
           )}
-          <span className="pcard__cat eyebrow">{post.category?.name ?? ""}</span>
+          {post.category && (
+            <span className="pcard__cat eyebrow">{post.category}</span>
+          )}
         </span>
         <span className="pcard__body">
-          <span className="pcard__kicker eyebrow">{post.category?.name ?? ""}</span>
+          {post.category && (
+            <span className="pcard__kicker eyebrow">{post.category}</span>
+          )}
           <h3 className="pcard__title">{post.title}</h3>
           {post.excerpt && (
             <p className="pcard__excerpt">{post.excerpt}</p>
           )}
           <span className="pcard__tags">
             {tags.map((t) => (
-              <span key={t.slug} className="ptag">{t.name}</span>
+              <span key={t} className="ptag">{t}</span>
             ))}
           </span>
           <span className="pcard__foot">
-            <span
-              className="avatar"
-              style={{ width: 24, height: 24, fontSize: 11, fontWeight: 700 }}
-              aria-hidden="true"
-            />
+            {post.author?.avatar_url ? (
+              <img
+                src={post.author.avatar_url}
+                alt={post.author.display_name}
+                width={24}
+                height={24}
+                style={{ width: 24, height: 24, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+              />
+            ) : (
+              <span
+                className="avatar avatar--accent"
+                style={{ width: 24, height: 24, fontSize: 11, fontWeight: 700 }}
+                aria-hidden="true"
+              >
+                {(post.author?.display_name ?? "A").charAt(0)}
+              </span>
+            )}
             <span className="pcard__who">
-              <span className="pcard__by">AUCTORITAS</span>
+              <span className="pcard__by">
+                {post.author?.display_name ?? "AUCTORITAS"}
+              </span>
             </span>
             <span className="pcard__metaline">
               {dateStr && <time dateTime={post.published_at ?? ""}>{dateStr}</time>}

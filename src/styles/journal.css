@@ -374,6 +374,7 @@ html[data-filter="rail"] .filters { position: sticky; top: calc(var(--headerH) +
   html[data-filter="rail"] .fgroup--cat .fgroup__label { display: none; }
   html[data-filter="rail"] .fcat {
     flex-direction: row; flex-wrap: nowrap; gap: 8px; overflow-x: auto;
+    max-height: none; overflow-y: visible; padding-right: 0;
     margin: 0 -20px; padding: 0 20px 4px;
     scrollbar-width: none; -webkit-overflow-scrolling: touch;
   }
@@ -409,6 +410,8 @@ html[data-filter="rail"] .filters { position: sticky; top: calc(var(--headerH) +
     max-height: 2400px; opacity: 1; pointer-events: auto; margin-top: 0;
   }
   .farchive { max-height: none; }
+  /* tag list flows fully inside the disclosure on mobile */
+  html[data-filter="rail"] .fgroup--tags .fchips { max-height: none; overflow: visible; padding-right: 0; }
 }
 
 /* search */
@@ -441,6 +444,16 @@ html[data-filter="rail"] .filters { position: sticky; top: calc(var(--headerH) +
 .fcat button[aria-pressed="true"] .fcat__count { color: rgba(255,255,255,0.6); }
 .fcat__count { font-size: 12px; font-weight: 600; color: var(--n-06); font-variant-numeric: tabular-nums; }
 
+/* cap the rail category list at ~10 rows, then scroll inside the box */
+html[data-filter="rail"] .fcat {
+  max-height: 400px; overflow-y: auto; padding-right: 2px;
+  scrollbar-width: thin; scrollbar-color: var(--n-04) transparent;
+}
+html[data-filter="rail"] .fcat::-webkit-scrollbar { width: 8px; }
+html[data-filter="rail"] .fcat::-webkit-scrollbar-thumb {
+  background: var(--n-04); border-radius: 4px; border: 2px solid transparent; background-clip: content-box;
+}
+
 /* tag / author chips */
 .fchips { display: flex; flex-wrap: wrap; gap: 7px; }
 .fchip {
@@ -452,6 +465,19 @@ html[data-filter="rail"] .filters { position: sticky; top: calc(var(--headerH) +
 html[data-shape="sharp"] .fchip { border-radius: 3px; }
 .fchip:hover { border-color: var(--ink); color: var(--ink); }
 .fchip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+
+/* cap the rail tag list at ~3 lines, then scroll inside the box */
+html[data-filter="rail"] .fgroup--tags .fchips {
+  max-height: 118px; overflow-y: auto; padding-right: 4px;
+  scrollbar-width: thin; scrollbar-color: var(--n-04) transparent;
+}
+html[data-filter="rail"][data-tagstyle="hash"] .fgroup--tags .fchips,
+html[data-filter="rail"][data-tagstyle="underline"] .fgroup--tags .fchips,
+html[data-filter="rail"][data-tagstyle="bracket"] .fgroup--tags .fchips { max-height: 90px; }
+html[data-filter="rail"] .fgroup--tags .fchips::-webkit-scrollbar { width: 8px; }
+html[data-filter="rail"] .fgroup--tags .fchips::-webkit-scrollbar-thumb {
+  background: var(--n-04); border-radius: 4px; border: 2px solid transparent; background-clip: content-box;
+}
 
 /* ---- tag chip styles (tweakable via data-tagstyle) ---- */
 /* default rules above = the "box" option. The styles below drop the container. */
@@ -606,6 +632,60 @@ html[data-filter="bar"] .results { margin-top: 36px; }
 .artmeta__name { font-size: 15px; font-weight: 700; color: var(--ink); }
 .artmeta__role { font-size: 13px; color: var(--fg-3); }
 .artmeta__sub { font-size: 13.5px; color: var(--fg-2); display: flex; align-items: center; gap: 8px; }
+
+/* ============================================================
+   ARTICLE COVER  (data-cover: none · banner · overlay · split)
+   Hero thumbnail on the detail page. Reflows the .arthead block;
+   shared markup is .arthead__text + figure.artcover.
+   ============================================================ */
+.arthead__text { min-width: 0; }
+.artcover { display: none; margin: 0; min-width: 0; }
+.artcover img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* — banner: cinematic full-width image below the title block — */
+html[data-cover="banner"] .arthead { padding-bottom: 0; }
+html[data-cover="banner"] .artcover {
+  display: block; margin-top: 32px; border-radius: var(--r-card); overflow: hidden;
+  aspect-ratio: 16 / 8; background: var(--surface-2);
+}
+html[data-shape="sharp"] html[data-cover="banner"] .artcover { border-radius: 4px; }
+
+/* — overlay: title sits over a darkened image (magazine cover) — ★ 프로덕션 기본 */
+html[data-cover="overlay"] .arthead {
+  position: relative; margin-top: 10px; padding: 0; overflow: hidden;
+  border-radius: var(--r-card); min-height: 460px;
+  display: flex; align-items: flex-end;
+}
+html[data-shape="sharp"] html[data-cover="overlay"] .arthead { border-radius: 4px; }
+html[data-cover="overlay"] .artcover { display: block; position: absolute; inset: 0; }
+html[data-cover="overlay"] .artcover::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(0deg, rgba(8,8,10,.9) 0%, rgba(8,8,10,.46) 50%, rgba(8,8,10,.12) 100%);
+}
+html[data-cover="overlay"] .arthead__text {
+  position: relative; z-index: 2; width: 100%; padding: clamp(28px, 4vw, 52px);
+}
+html[data-cover="overlay"] .arthead__cat { color: #fff; opacity: .92; }
+html[data-cover="overlay"] .arthead__title { color: #fff; }
+html[data-cover="overlay"] .arthead__meta { margin-top: 22px; }
+html[data-cover="overlay"] .artmeta__sub { color: rgba(255,255,255,.84); }
+html[data-cover="overlay"] .dotsep { color: rgba(255,255,255,.5); }
+@media (max-width: 640px){ html[data-cover="overlay"] .arthead { min-height: 380px; } }
+
+/* — split: image beside the title block — */
+html[data-cover="split"] .arthead {
+  display: grid; grid-template-columns: 1.05fr .95fr; gap: clamp(28px, 4vw, 56px);
+  align-items: center; padding: 32px 0 44px;
+}
+html[data-cover="split"] .artcover {
+  display: block; border-radius: var(--r-card); overflow: hidden;
+  aspect-ratio: 4 / 3; background: var(--surface-2);
+}
+html[data-shape="sharp"] html[data-cover="split"] .artcover { border-radius: 4px; }
+@media (max-width: 760px){
+  html[data-cover="split"] .arthead { grid-template-columns: 1fr; gap: 22px; padding-bottom: 36px; }
+  html[data-cover="split"] .artcover { order: -1; aspect-ratio: 16 / 9; }
+}
 
 /* layout grid: body + side rail */
 .artbody { padding: 48px 0 0; display: grid; gap: 56px; align-items: start; }

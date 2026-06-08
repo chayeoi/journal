@@ -61,13 +61,13 @@ export function FeaturedCarousel({ posts }: Props) {
             <a
               key={post.id}
               className={`cslide${i === current ? " is-active" : ""}`}
-              href={`/posts/${post.slug}`}
+              href={`/posts/${post.id}`}
               aria-hidden={i !== current}
             >
               <span className="cslide__media">
-                {post.cover_image_url ? (
+                {post.thumbnail_url ? (
                   <Image
-                    src={post.cover_image_url}
+                    src={post.thumbnail_url}
                     alt=""
                     fill
                     style={{ objectFit: "cover" }}
@@ -80,19 +80,31 @@ export function FeaturedCarousel({ posts }: Props) {
               </span>
               <span className="cslide__shade" />
               <span className="cslide__inner">
-                <span className="cslide__cat eyebrow">
-                  {post.category?.name ?? ""}
-                </span>
+                {post.category && (
+                  <span className="cslide__cat eyebrow">{post.category}</span>
+                )}
                 <span className="cslide__title">{post.title}</span>
                 <span className="cslide__excerpt">{post.excerpt ?? ""}</span>
                 <span className="cslide__meta">
-                  <span
-                    className="avatar"
-                    style={{ width: 30, height: 30, fontSize: 13, fontWeight: 700 }}
-                    aria-hidden="true"
-                  />
+                  {post.author?.avatar_url ? (
+                    <img
+                      src={post.author.avatar_url}
+                      alt={post.author.display_name}
+                      width={30}
+                      height={30}
+                      style={{ width: 30, height: 30, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+                    />
+                  ) : (
+                    <span
+                      className="avatar avatar--accent"
+                      style={{ width: 30, height: 30, fontSize: 13, fontWeight: 700 }}
+                      aria-hidden="true"
+                    >
+                      {(post.author?.display_name ?? "A").charAt(0)}
+                    </span>
+                  )}
                   <span>
-                    {post.author?.name ?? "AUCTORITAS"}
+                    {post.author?.display_name ?? "AUCTORITAS"}
                     <span className="dotsep" aria-hidden="true">·</span>
                     {post.published_at
                       ? fmtDate(post.published_at, "long")

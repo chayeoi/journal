@@ -6,6 +6,9 @@ const withVanillaExtract = createVanillaExtractPlugin({
 });
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: __dirname,
+  },
   images: {
     remotePatterns: [
       {
