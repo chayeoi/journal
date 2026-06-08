@@ -1,22 +1,23 @@
 import { ICON } from "@/utils/icons";
+import styles from "./styles.css";
 
-export function SiteFooter() {
+function SiteFooter() {
   const year = new Date().getFullYear();
   return (
-    <footer className="site-footer" id="site-footer">
-      <div className="site-footer__in">
-        <div className="footer-grid">
-          <div className="footer-brand">
-            <a className="brand" href="/">AUCTORITAS LAB</a>
-            <p className="footer-about">
+    <footer className={styles.root} id="site-footer">
+      <div className={styles.inner}>
+        <div className={styles.grid}>
+          <div>
+            <a className={styles.brand} href="/">AUCTORITAS LAB</a>
+            <p className={styles.about}>
               공간분쟁 전문 변호사팀이 직접 쓰는 판례·실무 저널.
               공사대금·부동산·임대차 등 공간을 둘러싼 분쟁을 판례와 실무 기준으로 기록합니다.
             </p>
-            <p className="footer-quote">공간을 둘러싼 분쟁, 법으로 풀어내다.</p>
+            <p className={styles.quote}>공간을 둘러싼 분쟁, 법으로 풀어내다.</p>
           </div>
-          <div className="footer-col">
+          <div className={styles.col}>
             <h4>저널</h4>
-            <div className="footer-contact">
+            <div className={styles.contact}>
               <a href="/">홈</a>
               <a href="https://instagram.com/auctoritas_journal" target="_blank" rel="noopener">
                 <span dangerouslySetInnerHTML={{ __html: ICON.insta }} />
@@ -28,9 +29,9 @@ export function SiteFooter() {
               </a>
             </div>
           </div>
-          <div className="footer-col">
+          <div className={styles.col}>
             <h4>문의</h4>
-            <div className="footer-contact">
+            <div className={styles.contact}>
               <a href="tel:0315463997">
                 <span dangerouslySetInnerHTML={{ __html: ICON.phone }} />
                 <span>031-546-3997</span>
@@ -51,7 +52,7 @@ export function SiteFooter() {
           </div>
         </div>
       </div>
-      <div className="footer-bottom">
+      <div className={styles.bottom}>
         <span>
           © {year} AUCTORITAS LAB. 본 저널의 글은 일반적 정보 제공을 목적으로 하며,
           개별 사안에 대한 법률자문을 대체하지 않습니다.
@@ -60,3 +61,5 @@ export function SiteFooter() {
     </footer>
   );
 }
+
+export default SiteFooter;

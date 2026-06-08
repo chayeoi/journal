@@ -7,7 +7,7 @@ interface Props {
   headings: Heading[];
 }
 
-export function TocWatcher({ headings }: Props) {
+function TocWatcher({ headings }: Props) {
   useEffect(() => {
     if (!headings.length) return;
 
@@ -43,3 +43,5 @@ export function TocWatcher({ headings }: Props) {
 
   return null;
 }
+
+export default TocWatcher;

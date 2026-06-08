@@ -31,9 +31,9 @@ src/components/<Name>/
 └── index.ts         # 외부 노출
 ```
 
-**`<Name>.tsx`** — 구현 파일. Props 타입을 `interface Props`로 선언하고, 컴포넌트는 `function` 키워드로 작성한다. `styles.css.ts`에서 가져온 `styles` 객체를 `styles.root` 형태로 사용한다. 파일 끝은 빈 줄 + `export default <Name>`.
+**`<Name>.tsx`** — 구현 파일. props가 있는 경우에만 `interface Props`를 선언하고, 컴포넌트는 `function` 키워드로 작성한다. props가 없는 컴포넌트는 `interface Props`를 선언하지 않는다. `styles.css.ts`에서 가져온 `styles` 객체를 `styles.root` 형태로 사용한다. 파일 끝은 빈 줄 + `export default <Name>`.
 
-**`styles.css.ts`** — 스타일 파일. 각 스타일을 `const`로 선언한 뒤 `styles` 객체에 묶어 `export default styles`로 내보낸다.
+**`styles.css.ts`** — 스타일 파일. 컴포넌트에 적용할 스타일이 있는 경우에만 만든다. 스타일이 불필요한 컴포넌트는 이 파일을 생성하지 않는다. 각 스타일을 `const`로 선언한 뒤 `styles` 객체에 묶어 `export default styles`로 내보낸다.
 
 ```ts
 const root = style({});

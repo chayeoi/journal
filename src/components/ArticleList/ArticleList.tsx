@@ -4,7 +4,8 @@ import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { PostListItem, CategoryCount, ArchiveDate } from "@/types";
 import { ICON } from "@/utils/icons";
-import { fmtDate } from "@/utils/format";
+import PostCard from "@/components/PostCard";
+import styles from "./styles.css";
 
 interface Filters {
   cat: string;
@@ -24,7 +25,7 @@ interface Props {
 
 type ActiveChip = { type: string; val?: string; label: string };
 
-export function ArticleList({
+function ArticleList({
   initialPosts,
   total,
   hasMore: initialHasMore,
@@ -41,7 +42,6 @@ export function ArticleList({
   const [fmoreOpen, setFmoreOpen] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  // 서버에서 새 initialPosts가 오면 (필터 변경) 상태 리셋
   useEffect(() => {
     setPosts(initialPosts);
     setHasMore(initialHasMore);
@@ -57,7 +57,6 @@ export function ArticleList({
     else document.documentElement.removeAttribute("data-fmore");
   }, [fmoreOpen]);
 
-  // JSON-LD ItemList 업데이트
   useEffect(() => {
     const el = document.getElementById("ld-list");
     if (!el) return;
@@ -124,7 +123,6 @@ export function ArticleList({
     }
   };
 
-  // 로드된 포스트에서 태그 집계 (사이드바용)
   const allTags = useMemo(() => {
     const m = new Map<string, number>();
     posts.forEach((p) => (p.tags ?? []).forEach((t) => m.set(t, (m.get(t) ?? 0) + 1)));
@@ -159,9 +157,9 @@ export function ArticleList({
 
   return (
     <section className="wrap home-articles" id="articles" aria-label="아티클">
-      <div className="listbody">
-        <aside className="filters" aria-label="필터">
-          <div className="fsearch fgroup">
+      <div className={styles.listBody}>
+        <aside className={styles.filters} aria-label="필터">
+          <div className={`${styles.fsearch} fgroup`}>
             <span dangerouslySetInnerHTML={{ __html: ICON.search }} />
             <input
               id="q"
@@ -173,7 +171,7 @@ export function ArticleList({
             />
           </div>
 
-          <div className="barselects">
+          <div className={styles.barselects}>
             <select
               id="bar-archive"
               aria-label="기간"
@@ -188,11 +186,12 @@ export function ArticleList({
           </div>
 
           <div className="fgroup fgroup--cat">
-            <div className="fgroup__label">카테고리</div>
-            <div className="fcat">
+            <div className={styles.fgroupLabel}>카테고리</div>
+            <div className={styles.fcat}>
               {categoryCounts.map((c) => (
                 <button
                   key={c.category}
+                  className={styles.fcatBtn}
                   data-cat={c.category}
                   aria-pressed={
                     c.category === "all" ? !filters.cat : filters.cat === c.category
@@ -202,7 +201,7 @@ export function ArticleList({
                   }
                 >
                   {c.category === "all" ? "전체" : c.category}
-                  <span className="fcat__count">{c.count}</span>
+                  <span className={styles.fcatCount}>{c.count}</span>
                 </button>
               ))}
             </div>
@@ -210,7 +209,7 @@ export function ArticleList({
 
           <button
             type="button"
-            className="fmore-toggle"
+            className={styles.fmoreToggle}
             id="fmoreToggle"
             aria-expanded={fmoreOpen}
             aria-controls="fmore"
@@ -220,15 +219,15 @@ export function ArticleList({
             <span dangerouslySetInnerHTML={{ __html: ICON.chevron }} />
           </button>
 
-          <div className="fmore" id="fmore">
+          <div className={styles.fmore} id="fmore">
             {allTags.length > 0 && (
               <div className="fgroup fgroup--tags">
-                <div className="fgroup__label">태그</div>
-                <div className="fchips">
+                <div className={styles.fgroupLabel}>태그</div>
+                <div className={styles.fchips}>
                   {allTags.map((t) => (
                     <button
                       key={t}
-                      className="fchip"
+                      className={styles.fchip}
                       data-tag={t}
                       aria-pressed={filters.tag === t}
                       onClick={() => navigate({ tag: filters.tag === t ? "" : t })}
@@ -242,11 +241,12 @@ export function ArticleList({
 
             {archiveDates.length > 0 && (
               <div className="fgroup fgroup--archive">
-                <div className="fgroup__label">아카이브</div>
-                <div className="farchive">
+                <div className={styles.fgroupLabel}>아카이브</div>
+                <div className={styles.farchive}>
                   {archiveDates.map((a) => (
                     <button
                       key={a.key}
+                      className={styles.farchiveBtn}
                       data-archive={a.key}
                       aria-pressed={filters.archive === a.key}
                       onClick={() =>
@@ -254,7 +254,7 @@ export function ArticleList({
                       }
                     >
                       {a.label}
-                      <span className="farchive__count">{a.count}</span>
+                      <span className={styles.farchiveCount}>{a.count}</span>
                     </button>
                   ))}
                 </div>
@@ -263,17 +263,17 @@ export function ArticleList({
           </div>
         </aside>
 
-        <section className="results" aria-live="polite">
-          <div className="results__bar">
-            <div className="results__count">
+        <section className={styles.results} aria-live="polite">
+          <div className={styles.resultsBar}>
+            <div className={styles.resultsCount}>
               <b>총 {total}</b>건의 아티클
             </div>
             {activeChips.length > 0 && (
-              <div className="results__active">
+              <div className={styles.resultsActive}>
                 {activeChips.map((c, i) => (
                   <button
                     key={i}
-                    className="activechip"
+                    className={styles.activechip}
                     onClick={() => clearChip(c.type, c.val)}
                   >
                     {c.label}
@@ -282,7 +282,7 @@ export function ArticleList({
                     </svg>
                   </button>
                 ))}
-                <button className="results__clear" onClick={clearAll}>
+                <button className={styles.resultsClear} onClick={clearAll}>
                   모두 지우기
                 </button>
               </div>
@@ -291,16 +291,16 @@ export function ArticleList({
 
           {posts.length > 0 ? (
             <>
-              <div className="cardgrid">
+              <div className={styles.cardgrid}>
                 {posts.map((post) => (
                   <PostCard key={post.id} post={post} />
                 ))}
               </div>
 
               {hasMore && (
-                <div style={{ display: "flex", justifyContent: "center", paddingTop: 40 }}>
+                <div className={styles.loadmoreWrap}>
                   <button
-                    className="loadmore-btn"
+                    className={styles.loadmoreBtn}
                     onClick={loadMore}
                     disabled={loadingMore}
                     aria-label="아티클 더 보기"
@@ -311,108 +311,15 @@ export function ArticleList({
               )}
             </>
           ) : (
-            <div className="empty">
+            <div className={styles.empty}>
               <h3>조건에 맞는 아티클이 없어요</h3>
               <p>필터를 줄이거나 다른 키워드로 검색해 보세요.</p>
             </div>
           )}
         </section>
       </div>
-
-      <style>{`
-        .loadmore-btn {
-          padding: 12px 32px;
-          font-size: 14px;
-          font-weight: 700;
-          color: var(--ink);
-          background: var(--surface-2);
-          border: 1.5px solid var(--border);
-          border-radius: var(--r-btn);
-          cursor: pointer;
-          transition: background var(--d) var(--ease), border-color var(--d) var(--ease);
-        }
-        .loadmore-btn:hover:not(:disabled) {
-          background: var(--accent);
-          border-color: var(--accent);
-          color: #fff;
-        }
-        .loadmore-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-      `}</style>
     </section>
   );
 }
 
-function PostCard({ post }: { post: PostListItem }) {
-  const tags = (post.tags ?? []).slice(0, 3);
-  const readingTime = post.reading_minutes ?? 1;
-  const dateStr = post.published_at ? fmtDate(post.published_at, "short") : "";
-
-  return (
-    <article className="pcard" data-cat={post.category ?? ""}>
-      <a className="pcard__link" href={`/posts/${post.id}`} aria-label={post.title}>
-        <span className="pcard__thumb">
-          {post.thumbnail_url ? (
-            <img
-              src={post.thumbnail_url}
-              alt=""
-              loading="lazy"
-              width={1600}
-              height={900}
-            />
-          ) : (
-            <div style={{ width: "100%", height: "100%", background: "var(--surface-2)" }} />
-          )}
-          {post.category && (
-            <span className="pcard__cat eyebrow">{post.category}</span>
-          )}
-        </span>
-        <span className="pcard__body">
-          {post.category && (
-            <span className="pcard__kicker eyebrow">{post.category}</span>
-          )}
-          <h3 className="pcard__title">{post.title}</h3>
-          {post.excerpt && (
-            <p className="pcard__excerpt">{post.excerpt}</p>
-          )}
-          <span className="pcard__tags">
-            {tags.map((t) => (
-              <span key={t} className="ptag">{t}</span>
-            ))}
-          </span>
-          <span className="pcard__foot">
-            {post.author?.avatar_url ? (
-              <img
-                src={post.author.avatar_url}
-                alt={post.author.display_name}
-                width={24}
-                height={24}
-                style={{ width: 24, height: 24, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
-              />
-            ) : (
-              <span
-                className="avatar avatar--accent"
-                style={{ width: 24, height: 24, fontSize: 11, fontWeight: 700 }}
-                aria-hidden="true"
-              >
-                {(post.author?.display_name ?? "A").charAt(0)}
-              </span>
-            )}
-            <span className="pcard__who">
-              <span className="pcard__by">
-                {post.author?.display_name ?? "AUCTORITAS"}
-              </span>
-            </span>
-            <span className="pcard__metaline">
-              {dateStr && <time dateTime={post.published_at ?? ""}>{dateStr}</time>}
-              <span className="dotsep" aria-hidden="true">·</span>
-              {readingTime}분
-            </span>
-          </span>
-        </span>
-      </a>
-    </article>
-  );
-}
+export default ArticleList;

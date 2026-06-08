@@ -6,11 +6,12 @@ import { buildPostMetadata, buildPostJsonLd } from "@/lib/metadata";
 import { extractHeadings, injectHeadingIds } from "@/utils/toc";
 import { fmtDate } from "@/utils/format";
 import { ICON } from "@/utils/icons";
-import { SiteHeader } from "@/components/SiteHeader";
-import { SiteFooter } from "@/components/SiteFooter";
-import { TocWatcher } from "@/components/TocWatcher";
-import { PageInit } from "@/components/PageInit";
-import { TweaksPanel } from "@/components/TweaksPanel";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
+import TocWatcher from "@/components/TocWatcher";
+import PageInit from "@/components/PageInit";
+import TweaksPanel from "@/components/TweaksPanel";
+import PostCard from "@/components/PostCard";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -166,24 +167,7 @@ export default async function PostPage({ params }: Props) {
                 </div>
               )}
 
-              {/* <aside className="consult-note">
-                <div>
-                  <div className="consult-note__t">떼인 돈, 포기하지 않아도 돼요.</div>
-                  <div className="consult-note__d">
-                    공사대금, 보증금, 월세 등으로 받지 못한 돈이 있다면
-                    FENCIL의 간편한 청구 절차로 법원에 청구해 보세요.
-                  </div>
-                </div>
-                <a
-                  className="consult-note__btn"
-                  href="https://fencil.app"
-                  target="_blank"
-                  rel="noopener"
-                >
-                  무료로 시작하기{" "}
-                  <span dangerouslySetInnerHTML={{ __html: ICON.arrow }} />
-                </a>
-              </aside> */}
+              {/* <ConsultNote /> */}
             </div>
           </div>
         </div>
@@ -206,51 +190,7 @@ export default async function PostPage({ params }: Props) {
             </div>
             <div className="cardgrid">
               {relatedPosts.map((rp) => (
-                <article key={rp.id} className="pcard" data-cat={rp.category ?? ""}>
-                  <a className="pcard__link" href={`/posts/${rp.id}`} aria-label={rp.title}>
-                    <span className="pcard__thumb">
-                      {rp.thumbnail_url && (
-                        <img src={rp.thumbnail_url} alt="" loading="lazy" width={1600} height={900} />
-                      )}
-                      {rp.category && (
-                        <span className="pcard__cat eyebrow">{rp.category}</span>
-                      )}
-                    </span>
-                    <span className="pcard__body">
-                      <h3 className="pcard__title">{rp.title}</h3>
-                      {rp.excerpt && <p className="pcard__excerpt">{rp.excerpt}</p>}
-                      <span className="pcard__foot">
-                        {rp.author?.avatar_url ? (
-                          <img
-                            src={rp.author.avatar_url}
-                            alt={rp.author.display_name}
-                            width={24}
-                            height={24}
-                            style={{ width: 24, height: 24, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
-                          />
-                        ) : (
-                          <span
-                            className="avatar avatar--accent"
-                            style={{ width: 24, height: 24, fontSize: 11, fontWeight: 700 }}
-                            aria-hidden="true"
-                          >
-                            {(rp.author?.display_name ?? "A").charAt(0)}
-                          </span>
-                        )}
-                        <span className="pcard__who">
-                          <span className="pcard__by">
-                            {rp.author?.display_name ?? "AUCTORITAS"}
-                          </span>
-                        </span>
-                        <span className="pcard__metaline">
-                          {rp.published_at && (
-                            <time dateTime={rp.published_at}>{fmtDate(rp.published_at, "short")}</time>
-                          )}
-                        </span>
-                      </span>
-                    </span>
-                  </a>
-                </article>
+                <PostCard key={rp.id} post={rp} showReadingTime={false} />
               ))}
             </div>
           </section>
@@ -263,26 +203,6 @@ export default async function PostPage({ params }: Props) {
       <div id="tweaks-root">
         <TweaksPanel />
       </div>
-
-      <style>{`
-        .consult-note {
-          display: flex; align-items: center; justify-content: space-between;
-          gap: 24px; flex-wrap: wrap;
-          padding: 26px 28px; margin-top: 32px;
-          border-radius: var(--r-card);
-          background: var(--surface-2);
-        }
-        .consult-note__t { font-size: 16px; font-weight: 800; color: var(--ink); letter-spacing: -0.02em; }
-        .consult-note__d { font-size: 14px; color: var(--fg-2); line-height: 1.55; margin-top: 6px; max-width: 46ch; }
-        .consult-note__btn {
-          display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
-          font-size: 14px; font-weight: 700; color: #fff; background-color: #161616;
-          text-decoration: none; padding: 12px 20px; border-radius: var(--r-btn);
-          transition: transform var(--d) var(--ease);
-        }
-        .consult-note__btn svg { width: 16px; height: 16px; }
-        .consult-note__btn:hover { background: var(--accent); transform: translateY(-2px); }
-      `}</style>
     </>
   );
 }

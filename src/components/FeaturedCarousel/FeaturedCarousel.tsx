@@ -5,6 +5,7 @@ import Image from "next/image";
 import type { PostListItem } from "@/types";
 import { ICON } from "@/utils/icons";
 import { fmtDate } from "@/utils/format";
+import styles from "./styles.css";
 
 interface Props {
   posts: PostListItem[];
@@ -12,7 +13,7 @@ interface Props {
 
 const DELAY = 5000;
 
-export function FeaturedCarousel({ posts }: Props) {
+function FeaturedCarousel({ posts }: Props) {
   const [current, setCurrent] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const n = posts.length;
@@ -49,22 +50,22 @@ export function FeaturedCarousel({ posts }: Props) {
   return (
     <section className="wrap" aria-label="대표 아티클" aria-roledescription="carousel">
       <div
-        className="carousel"
+        className={styles.root}
         onMouseEnter={stopTimer}
         onMouseLeave={startTimer}
       >
         <div
-          className="carousel__track"
+          className={styles.track}
           style={{ transform: `translateX(-${current * 100}%)` }}
         >
           {posts.map((post, i) => (
             <a
               key={post.id}
-              className={`cslide${i === current ? " is-active" : ""}`}
+              className={styles.slide}
               href={`/posts/${post.id}`}
               aria-hidden={i !== current}
             >
-              <span className="cslide__media">
+              <span className={styles.slideMedia}>
                 {post.thumbnail_url ? (
                   <Image
                     src={post.thumbnail_url}
@@ -78,26 +79,25 @@ export function FeaturedCarousel({ posts }: Props) {
                   <div style={{ width: "100%", height: "100%", background: "var(--ink-bg)" }} />
                 )}
               </span>
-              <span className="cslide__shade" />
-              <span className="cslide__inner">
+              <span className={styles.slideShade} />
+              <span className={styles.slideInner}>
                 {post.category && (
-                  <span className="cslide__cat eyebrow">{post.category}</span>
+                  <span className={styles.slideCat}>{post.category}</span>
                 )}
-                <span className="cslide__title">{post.title}</span>
-                <span className="cslide__excerpt">{post.excerpt ?? ""}</span>
-                <span className="cslide__meta">
+                <span className={styles.slideTitle}>{post.title}</span>
+                <span className={styles.slideExcerpt}>{post.excerpt ?? ""}</span>
+                <span className={styles.slideMeta}>
                   {post.author?.avatar_url ? (
                     <img
                       src={post.author.avatar_url}
                       alt={post.author.display_name}
+                      className={styles.slideAvatar}
                       width={30}
                       height={30}
-                      style={{ width: 30, height: 30, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
                     />
                   ) : (
                     <span
-                      className="avatar avatar--accent"
-                      style={{ width: 30, height: 30, fontSize: 13, fontWeight: 700 }}
+                      className={`avatar avatar--accent ${styles.avatarInitial}`}
                       aria-hidden="true"
                     >
                       {(post.author?.display_name ?? "A").charAt(0)}
@@ -106,9 +106,7 @@ export function FeaturedCarousel({ posts }: Props) {
                   <span>
                     {post.author?.display_name ?? "AUCTORITAS"}
                     <span className="dotsep" aria-hidden="true">·</span>
-                    {post.published_at
-                      ? fmtDate(post.published_at, "long")
-                      : ""}
+                    {post.published_at ? fmtDate(post.published_at, "long") : ""}
                   </span>
                 </span>
               </span>
@@ -116,26 +114,24 @@ export function FeaturedCarousel({ posts }: Props) {
           ))}
         </div>
 
-        {/* 화살표 */}
         <button
-          className="carousel__arrow carousel__arrow--prev"
+          className={`${styles.arrow} ${styles.arrowPrev}`}
           aria-label="이전 슬라이드"
           onClick={(e) => { e.preventDefault(); goSlide(current - 1); startTimer(); }}
           dangerouslySetInnerHTML={{ __html: ICON.chevron }}
         />
         <button
-          className="carousel__arrow carousel__arrow--next"
+          className={`${styles.arrow} ${styles.arrowNext}`}
           aria-label="다음 슬라이드"
           onClick={(e) => { e.preventDefault(); goSlide(current + 1); startTimer(); }}
           dangerouslySetInnerHTML={{ __html: ICON.chevron }}
         />
 
-        {/* 점 */}
-        <div className="carousel__dots" role="tablist" aria-label="슬라이드 선택">
+        <div className={styles.dots} role="tablist" aria-label="슬라이드 선택">
           {posts.map((post, i) => (
             <button
               key={post.id}
-              className={`cdot${i === current ? " is-on" : ""}`}
+              className={i === current ? `${styles.dot} ${styles.dotActive}` : styles.dot}
               role="tab"
               aria-selected={i === current}
               aria-label={`${i + 1}번 슬라이드: ${post.title}`}
@@ -147,3 +143,5 @@ export function FeaturedCarousel({ posts }: Props) {
     </section>
   );
 }
+
+export default FeaturedCarousel;
