@@ -2,8 +2,11 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
+import styles from "./styles.css";
 
-export function SiteHeader() {
+interface Props {}
+
+function SiteHeader({}: Props) {
   const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -35,16 +38,18 @@ export function SiteHeader() {
   }, []);
 
   return (
-    <header className="site-header" ref={ref}>
-      <div className="site-header__in">
-        <Link className="brand" href="/">
+    <header className={styles.root} ref={ref}>
+      <div className={styles.inner}>
+        <Link className={styles.brand} href="/">
           AUCTORITAS LAB
         </Link>
-        <span className="site-header__spacer" />
-        <a className="site-header__cta" href="#site-footer">
+        <span className={styles.spacer} />
+        <a className={styles.cta} href="#site-footer">
           <span>상담 문의</span>
         </a>
       </div>
     </header>
   );
 }
+
+export default SiteHeader;

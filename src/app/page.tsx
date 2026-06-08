@@ -1,11 +1,11 @@
 import { getPosts, getCategoryCounts, getArchiveDates, getFeaturedPosts } from "@/lib/posts";
 import { buildSiteJsonLd } from "@/lib/metadata";
-import { SiteHeader } from "@/components/SiteHeader";
-import { SiteFooter } from "@/components/SiteFooter";
-import { FeaturedCarousel } from "@/components/FeaturedCarousel";
-import { ArticleList } from "@/components/ArticleList";
-import { PageInit } from "@/components/PageInit";
-import { TweaksPanel } from "@/components/TweaksPanel";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
+import FeaturedCarousel from "@/components/FeaturedCarousel";
+import ArticleList from "@/components/ArticleList";
+import PageInit from "@/components/PageInit";
+import TweaksPanel from "@/components/TweaksPanel";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

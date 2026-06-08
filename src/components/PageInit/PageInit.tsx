@@ -4,10 +4,10 @@ import { useEffect } from "react";
 
 interface Props {
   page: "home" | "detail";
-  cover?: "overlay"; // locked: only overlay; not exposed in tweaks panel
+  cover?: "overlay";
 }
 
-export function PageInit({ page, cover }: Props) {
+function PageInit({ page, cover }: Props) {
   useEffect(() => {
     const r = document.documentElement;
     r.setAttribute("data-page", page);
@@ -16,3 +16,5 @@ export function PageInit({ page, cover }: Props) {
   }, [page, cover]);
   return null;
 }
+
+export default PageInit;
