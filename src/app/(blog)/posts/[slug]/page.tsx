@@ -12,7 +12,6 @@ import TocWatcher from "@/components/TocWatcher";
 import PageInit from "@/components/PageInit";
 import TweaksPanel from "@/components/TweaksPanel";
 import PostCard from "@/components/PostCard";
-import ConsultNote from "@/components/ConsultNote";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -168,7 +167,7 @@ export default async function PostPage({ params }: Props) {
                 </div>
               )}
 
-              <ConsultNote />
+              {/* <ConsultNote /> */}
             </div>
           </div>
         </div>
