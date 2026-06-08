@@ -166,7 +166,7 @@ export default async function PostPage({ params }: Props) {
                 </div>
               )}
 
-              <aside className="consult-note">
+              {/* <aside className="consult-note">
                 <div>
                   <div className="consult-note__t">떼인 돈, 포기하지 않아도 돼요.</div>
                   <div className="consult-note__d">
@@ -183,7 +183,7 @@ export default async function PostPage({ params }: Props) {
                   무료로 시작하기{" "}
                   <span dangerouslySetInnerHTML={{ __html: ICON.arrow }} />
                 </a>
-              </aside>
+              </aside> */}
             </div>
           </div>
         </div>
