@@ -1,9 +1,7 @@
 import { ICON } from "@/utils/icons";
 import styles from "./styles.css";
 
-interface Props {}
-
-function SiteFooter({}: Props) {
+function SiteFooter() {
   const year = new Date().getFullYear();
   return (
     <footer className={styles.root} id="site-footer">

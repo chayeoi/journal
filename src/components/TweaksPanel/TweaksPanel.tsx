@@ -41,9 +41,7 @@ function applyTweaks(v: Tweaks) {
   r.setAttribute("data-thumb", v.thumb);
 }
 
-interface Props {}
-
-function TweaksPanel({}: Props) {
+function TweaksPanel() {
   const [open, setOpen] = useState(false);
   const [t, setT] = useState<Tweaks>(DEFAULTS);
   const dragRef = useRef<HTMLDivElement>(null);

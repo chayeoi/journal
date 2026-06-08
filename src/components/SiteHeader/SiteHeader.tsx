@@ -4,9 +4,7 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import styles from "./styles.css";
 
-interface Props {}
-
-function SiteHeader({}: Props) {
+function SiteHeader() {
   const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {

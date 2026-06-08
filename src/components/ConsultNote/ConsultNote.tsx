@@ -1,9 +1,7 @@
 import { ICON } from "@/utils/icons";
 import styles from "./styles.css";
 
-interface Props {}
-
-function ConsultNote({}: Props) {
+function ConsultNote() {
   return (
     <aside className={styles.root}>
       <div className={styles.text}>
