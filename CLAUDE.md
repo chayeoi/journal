@@ -20,6 +20,36 @@
 - `pnpm dlx` 사용 (npx 미설치)
 - `pnpm-workspace.yaml`의 `allowBuilds`에 `sharp`, `unrs-resolver`, `@swc/core`, `esbuild` 허용 설정 있음
 
+## 컴포넌트 작성 규칙
+
+컴포넌트는 `src/components/<Name>/` 폴더 안에 아래 3개 파일로 구성한다.
+
+```
+src/components/<Name>/
+├── <Name>.tsx       # 구현
+├── styles.css.ts    # 스타일
+└── index.ts         # 외부 노출
+```
+
+**`<Name>.tsx`** — 구현 파일. Props 타입을 `interface Props`로 선언하고, 컴포넌트는 `function` 키워드로 작성한다. `styles.css.ts`에서 가져온 `styles` 객체를 `styles.root` 형태로 사용한다. 파일 끝은 빈 줄 + `export default <Name>`.
+
+**`styles.css.ts`** — 스타일 파일. 각 스타일을 `const`로 선언한 뒤 `styles` 객체에 묶어 `export default styles`로 내보낸다.
+
+```ts
+const root = style({});
+const text = style({});
+
+const styles = { root, text };
+
+export default styles;
+```
+
+**`index.ts`** — re-export 전용. 아래 한 줄만 작성한다.
+
+```ts
+export { default } from './<Name>';
+```
+
 ## 주요 파일
 - `src/lib/supabase/server.ts` — Server Component용 Supabase 클라이언트
 - `src/lib/supabase/client.ts` — 브라우저용 Supabase 클라이언트
