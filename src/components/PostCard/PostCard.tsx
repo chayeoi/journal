@@ -14,7 +14,7 @@ function PostCard({ post, showReadingTime = true }: Props) {
 
   return (
     <article className={styles.root} data-cat={post.category ?? ""}>
-      <a className={styles.link} href={`/posts/${post.id}`} aria-label={post.title}>
+      <a className={styles.link} href={`/posts/${post.post_number}`} aria-label={post.title}>
         <span className={styles.thumb}>
           {post.thumbnail_url ? (
             <img

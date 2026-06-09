@@ -7,6 +7,7 @@ export type Profile = {
 
 export type Post = {
   id: string;
+  post_number: number;
   title: string;
   content: string;
   excerpt: string | null;
@@ -26,6 +27,7 @@ export type Post = {
 
 export type PostListItem = {
   id: string;
+  post_number: number;
   title: string;
   thumbnail_url: string | null;
   author_id: string | null;
