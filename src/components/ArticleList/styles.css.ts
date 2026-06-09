@@ -95,7 +95,7 @@ const fcat = style({
   gap: 2,
   selectors: {
     'html[data-filter="rail"] &': {
-      maxHeight: 400,
+      maxHeight: 210,
       overflowY: 'auto',
       paddingRight: 2,
       scrollbarWidth: 'thin',
