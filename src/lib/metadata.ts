@@ -57,17 +57,34 @@ function getExcerpt(content: string, maxLen = 160): string {
 }
 
 export function buildPostMetadata(post: Post): Metadata {
-  const excerpt = getExcerpt(post.content);
+  const description =
+    post.excerpt?.trim() || getExcerpt(post.content) || undefined;
+
+  const images = post.thumbnail_url
+    ? [{ url: post.thumbnail_url, width: 1200, height: 630, alt: post.title }]
+    : [];
+
   return {
     title: post.title,
-    description: excerpt || undefined,
+    description,
     openGraph: {
       type: "article",
       title: post.title,
-      description: excerpt || undefined,
-      images: post.thumbnail_url ? [post.thumbnail_url] : [],
+      description,
+      images,
       locale: "ko_KR",
       siteName: SITE_NAME,
+      publishedTime: post.published_at ?? undefined,
+      modifiedTime: post.updated_at,
+      authors: post.author ? [post.author.display_name] : undefined,
+      section: post.category ?? undefined,
+      tags: post.tags.length > 0 ? post.tags : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description,
+      images: post.thumbnail_url ? [post.thumbnail_url] : undefined,
     },
     alternates: {
       canonical: `${SITE_URL}/posts/${post.id}`,
