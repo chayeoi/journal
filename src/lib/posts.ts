@@ -1,4 +1,3 @@
-import { createClient } from "@/lib/supabase/server";
 import { createStaticClient } from "@/lib/supabase/static";
 import type {
   Post,
@@ -17,7 +16,7 @@ const POST_LIST_FIELDS =
   "id, post_number, title, thumbnail_url, author_id, category, published_at, created_at, tags, excerpt, reading_minutes";
 
 async function fetchAuthors(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: ReturnType<typeof createStaticClient>,
   authorIds: string[],
 ): Promise<Map<string, Pick<Profile, "id" | "display_name" | "avatar_url">>> {
   const map = new Map<string, Pick<Profile, "id" | "display_name" | "avatar_url">>();
@@ -52,7 +51,7 @@ function mapToListItem(
 }
 
 export async function getPosts(params: PostSearchParams = {}): Promise<PostsResult> {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   const { query, category, tag, archive, page = 1 } = params;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -94,7 +93,7 @@ export async function getPosts(params: PostSearchParams = {}): Promise<PostsResu
 }
 
 export async function getCategoryCounts(): Promise<CategoryCount[]> {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   const { data, error } = await supabase
     .from("posts")
     .select("category")
@@ -117,7 +116,7 @@ export async function getCategoryCounts(): Promise<CategoryCount[]> {
 }
 
 export async function getArchiveDates(): Promise<ArchiveDate[]> {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   const { data, error } = await supabase
     .from("posts")
     .select("published_at")
@@ -143,7 +142,7 @@ export async function getArchiveDates(): Promise<ArchiveDate[]> {
 }
 
 export async function getFeaturedPosts(): Promise<PostListItem[]> {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   const { data, error } = await supabase
     .from("posts")
     .select(POST_LIST_FIELDS)
@@ -168,7 +167,7 @@ export async function getRelatedPosts(
   category: string | null,
   limit = 3,
 ): Promise<PostListItem[]> {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
 
   // 태그 겹침 OR 같은 카테고리인 후보 수집
   const orParts: string[] = [];
@@ -209,7 +208,7 @@ export async function getRelatedPosts(
 }
 
 export async function getPostByNumber(postNumber: number): Promise<Post | null> {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
 
   const { data, error } = await supabase
     .from("posts")
