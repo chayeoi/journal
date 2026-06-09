@@ -299,14 +299,21 @@ function ArticleList({
 
               {hasMore && (
                 <div className={styles.loadmoreWrap}>
+                  <span className={styles.loadmoreRule} aria-hidden="true" />
                   <button
                     className={styles.loadmoreBtn}
                     onClick={loadMore}
                     disabled={loadingMore}
                     aria-label="아티클 더 보기"
                   >
-                    {loadingMore ? "불러오는 중…" : "더 보기"}
+                    <span>{loadingMore ? "불러오는 중…" : "더 보기"}</span>
+                    <span className={styles.loadmoreIcon}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M6 9l6 6 6-6" />
+                      </svg>
+                    </span>
                   </button>
+                  <span className={styles.loadmoreRule} aria-hidden="true" />
                 </div>
               )}
             </>
