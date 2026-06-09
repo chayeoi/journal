@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createStaticClient } from "@/lib/supabase/static";
 import type {
   Post,
@@ -207,7 +208,7 @@ export async function getRelatedPosts(
   return top.map((p) => mapToListItem(p, profilesMap));
 }
 
-export async function getPostByNumber(postNumber: number): Promise<Post | null> {
+export const getPostByNumber = cache(async function getPostByNumber(postNumber: number): Promise<Post | null> {
   const supabase = createStaticClient();
 
   const { data, error } = await supabase
@@ -230,7 +231,7 @@ export async function getPostByNumber(postNumber: number): Promise<Post | null> 
   }
 
   return { ...data, tags: data.tags ?? [], author } as Post;
-}
+});
 
 // 빌드 타임 / sitemap 용 — 쿠키 없이 호출
 export async function getAllPostNumbers(): Promise<number[]> {
