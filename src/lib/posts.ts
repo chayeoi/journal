@@ -14,7 +14,7 @@ import { CATEGORY_ORDER } from "@/types";
 const PAGE_SIZE = 50;
 
 const POST_LIST_FIELDS =
-  "id, title, thumbnail_url, author_id, category, published_at, created_at, tags, excerpt, reading_minutes";
+  "id, post_number, title, thumbnail_url, author_id, category, published_at, created_at, tags, excerpt, reading_minutes";
 
 async function fetchAuthors(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -37,6 +37,7 @@ function mapToListItem(
   const authorId = p.author_id as string | null;
   return {
     id: p.id as string,
+    post_number: p.post_number as number,
     title: p.title as string,
     thumbnail_url: (p.thumbnail_url as string | null) ?? null,
     author_id: authorId,
@@ -207,13 +208,13 @@ export async function getRelatedPosts(
   return top.map((p) => mapToListItem(p, profilesMap));
 }
 
-export async function getPostById(id: string): Promise<Post | null> {
+export async function getPostByNumber(postNumber: number): Promise<Post | null> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("posts")
     .select("*")
-    .eq("id", id)
+    .eq("post_number", postNumber)
     .eq("is_visible", true)
     .single();
 
@@ -233,13 +234,13 @@ export async function getPostById(id: string): Promise<Post | null> {
 }
 
 // 빌드 타임 / sitemap 용 — 쿠키 없이 호출
-export async function getAllPostIds(): Promise<string[]> {
+export async function getAllPostNumbers(): Promise<number[]> {
   const supabase = createStaticClient();
   const { data, error } = await supabase
     .from("posts")
-    .select("id")
+    .select("post_number")
     .eq("is_visible", true);
 
   if (error) return [];
-  return (data ?? []).map((p) => p.id);
+  return (data ?? []).map((p) => p.post_number);
 }

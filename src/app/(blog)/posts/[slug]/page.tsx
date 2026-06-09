@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getPostById, getAllPostIds, getRelatedPosts } from "@/lib/posts";
+import { getPostByNumber, getAllPostNumbers, getRelatedPosts } from "@/lib/posts";
 import { buildPostMetadata, buildPostJsonLd } from "@/lib/metadata";
 import { extractHeadings, injectHeadingIds } from "@/utils/toc";
 import { fmtDate } from "@/utils/format";
@@ -16,20 +16,20 @@ import PostCard from "@/components/PostCard";
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateStaticParams() {
-  const ids = await getAllPostIds();
-  return ids.map((id) => ({ slug: id }));
+  const numbers = await getAllPostNumbers();
+  return numbers.map((n) => ({ slug: String(n) }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getPostById(slug);
+  const post = await getPostByNumber(Number(slug));
   if (!post) return {};
   return buildPostMetadata(post);
 }
 
 export default async function PostPage({ params }: Props) {
   const { slug } = await params;
-  const post = await getPostById(slug);
+  const post = await getPostByNumber(Number(slug));
   if (!post) notFound();
 
   const relatedPosts = await getRelatedPosts(post.id, post.tags ?? [], post.author_id, post.category, 3);
