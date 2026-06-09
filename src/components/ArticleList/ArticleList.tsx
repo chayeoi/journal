@@ -68,7 +68,7 @@ function ArticleList({
       itemListElement: posts.slice(0, 20).map((p, i) => ({
         "@type": "ListItem",
         position: i + 1,
-        url: `${window.location.origin}/posts/${p.id}`,
+        url: `${window.location.origin}/posts/${p.post_number}`,
         name: p.title,
       })),
     });
