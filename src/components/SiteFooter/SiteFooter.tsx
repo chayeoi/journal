@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ICON } from "@/utils/icons";
 import styles from "./styles.css";
 
@@ -8,7 +9,7 @@ function SiteFooter() {
       <div className={styles.inner}>
         <div className={styles.grid}>
           <div>
-            <a className={styles.brand} href="/">AUCTORITAS LAB</a>
+            <Link className={styles.brand} href="/">AUCTORITAS LAB</Link>
             <p className={styles.about}>
               공간분쟁 전문 변호사팀이 직접 쓰는 판례·실무 저널.
               공사대금·부동산·임대차 등 공간을 둘러싼 분쟁을 판례와 실무 기준으로 기록합니다.
@@ -18,7 +19,7 @@ function SiteFooter() {
           <div className={styles.col}>
             <h4>저널</h4>
             <div className={styles.contact}>
-              <a href="/">홈</a>
+              <Link href="/">홈</Link>
               <a href="https://instagram.com/auctoritas_journal" target="_blank" rel="noopener">
                 <span dangerouslySetInnerHTML={{ __html: ICON.insta }} />
                 <span>@auctoritas_journal</span>

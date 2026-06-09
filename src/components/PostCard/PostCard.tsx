@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { PostListItem } from "@/types";
 import { fmtDate } from "@/utils/format";
 import styles from "./styles.css";
@@ -14,7 +15,7 @@ function PostCard({ post, showReadingTime = true }: Props) {
 
   return (
     <article className={styles.root} data-cat={post.category ?? ""}>
-      <a className={styles.link} href={`/posts/${post.post_number}`} aria-label={post.title}>
+      <Link className={styles.link} href={`/posts/${post.post_number}`} aria-label={post.title}>
         <span className={styles.thumb}>
           {post.thumbnail_url ? (
             <img
@@ -77,7 +78,7 @@ function PostCard({ post, showReadingTime = true }: Props) {
             </span>
           </span>
         </span>
-      </a>
+      </Link>
     </article>
   );
 }
