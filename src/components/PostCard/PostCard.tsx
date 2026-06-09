@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { PostListItem } from "@/types";
 import { fmtDate } from "@/utils/format";
@@ -18,12 +19,12 @@ function PostCard({ post, showReadingTime = true }: Props) {
       <Link className={styles.link} href={`/posts/${post.post_number}`} aria-label={post.title}>
         <span className={styles.thumb}>
           {post.thumbnail_url ? (
-            <img
+            <Image
               src={post.thumbnail_url}
               alt=""
-              loading="lazy"
-              width={1600}
-              height={900}
+              fill
+              sizes="(max-width: 480px) calc(100vw - 40px), (max-width: 720px) calc(50vw - 36px), 380px"
+              style={{ objectFit: "cover" }}
             />
           ) : (
             <div style={{ width: "100%", height: "100%", background: "var(--surface-2)" }} />

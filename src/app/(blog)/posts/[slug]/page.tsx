@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { getPostByNumber, getAllPostNumbers, getRelatedPosts } from "@/lib/posts";
 import { buildPostMetadata, buildPostJsonLd } from "@/lib/metadata";
@@ -93,12 +94,14 @@ export default async function PostPage({ params }: Props) {
           </div>
           {post.thumbnail_url && (
             <figure className="artcover">
-              <img
+              <Image
                 src={post.thumbnail_url}
                 alt=""
                 width={1600}
                 height={900}
-                loading="eager"
+                priority
+                sizes="(max-width: 720px) 100vw, 1180px"
+                style={{ width: "100%", height: "auto" }}
               />
             </figure>
           )}
