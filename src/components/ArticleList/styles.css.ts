@@ -665,34 +665,64 @@ globalStyle(`html[data-thumb="off"][data-card="overlay"] .${cardgrid}`, {
   },
 });
 
-/* ── 더보기 버튼 ── */
+/* ── 더보기 버튼 (editorial: hairline rule × 2 + circular chevron) ── */
 const loadmoreWrap = style({
   display: 'flex',
-  justifyContent: 'center',
-  paddingTop: 40,
+  alignItems: 'center',
+  gap: 22,
+  marginTop: 60,
+});
+globalStyle(`html[data-card="list"] ${loadmoreWrap}`, { marginTop: 14 });
+
+const loadmoreRule = style({
+  flex: '1 1 0',
+  height: 1,
+  background: 'var(--line)',
 });
 
 const loadmoreBtn = style({
-  padding: '12px 32px',
+  flex: 'none',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 12,
+  background: 'none',
+  border: 'none',
+  cursor: 'pointer',
+  padding: '6px 4px',
   fontSize: 14,
   fontWeight: 700,
-  color: 'var(--ink)',
-  background: 'var(--surface-2)',
-  border: '1.5px solid var(--border, var(--line))',
-  borderRadius: 'var(--r-btn)',
-  cursor: 'pointer',
-  transition: 'background var(--d) var(--ease), border-color var(--d) var(--ease)',
+  letterSpacing: '-0.01em',
+  color: 'var(--fg-2)',
+  transition: 'color var(--d) var(--ease)',
   selectors: {
-    '&:hover:not(:disabled)': {
-      background: 'var(--accent)',
-      borderColor: 'var(--accent)',
-      color: '#fff',
-    },
-    '&:disabled': {
-      opacity: 0.5,
-      cursor: 'not-allowed',
-    },
+    '&:hover:not(:disabled)': { color: 'var(--ink)' },
+    '&:disabled': { opacity: 0.5, cursor: 'not-allowed' },
   },
+});
+
+const loadmoreIcon = style({
+  width: 32,
+  height: 32,
+  borderRadius: 999,
+  border: '1.5px solid var(--line)',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  transition: 'border-color var(--d) var(--ease), background var(--d) var(--ease)',
+});
+globalStyle(`html[data-shape="sharp"] ${loadmoreIcon}`, { borderRadius: 5 });
+globalStyle(`${loadmoreIcon} svg`, {
+  width: 15,
+  height: 15,
+  transition: 'transform var(--d) var(--ease)',
+});
+globalStyle(`${loadmoreBtn}:hover:not(:disabled) ${loadmoreIcon}`, {
+  borderColor: 'var(--ink)',
+  background: 'var(--ink)',
+  color: 'var(--bg)',
+});
+globalStyle(`${loadmoreBtn}:hover:not(:disabled) ${loadmoreIcon} svg`, {
+  transform: 'translateY(2px)',
 });
 
 const styles = {
@@ -720,7 +750,9 @@ const styles = {
   empty,
   cardgrid,
   loadmoreWrap,
+  loadmoreRule,
   loadmoreBtn,
+  loadmoreIcon,
 };
 
 export default styles;
