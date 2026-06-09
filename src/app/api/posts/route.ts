@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getPosts } from "@/lib/posts";
 
+export const revalidate = 60;
+
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
   const page = Math.max(1, parseInt(sp.get("page") ?? "1", 10));

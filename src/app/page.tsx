@@ -8,6 +8,8 @@ import PageInit from "@/components/PageInit";
 import TweaksPanel from "@/components/TweaksPanel";
 import type { Metadata } from "next";
 
+export const revalidate = 60;
+
 export const metadata: Metadata = {
   title: "공간을 둘러싼 분쟁, 법으로 풀어내다 — AUCTORITAS LAB",
   description:

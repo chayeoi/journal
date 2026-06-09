@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import type { PostListItem } from "@/types";
 import { ICON } from "@/utils/icons";
 import { fmtDate } from "@/utils/format";
@@ -59,10 +60,10 @@ function FeaturedCarousel({ posts }: Props) {
           style={{ transform: `translateX(-${current * 100}%)` }}
         >
           {posts.map((post, i) => (
-            <a
+            <Link
               key={post.id}
               className={styles.slide}
-              href={`/posts/${post.id}`}
+              href={`/posts/${post.post_number}`}
               aria-hidden={i !== current}
             >
               <span className={styles.slideMedia}>
@@ -110,7 +111,7 @@ function FeaturedCarousel({ posts }: Props) {
                   </span>
                 </span>
               </span>
-            </a>
+            </Link>
           ))}
         </div>
 
