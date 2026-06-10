@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getPosts, getCategoryCounts, getArchiveDates, getFeaturedPosts } from "@/lib/posts";
 import { buildSiteJsonLd } from "@/lib/metadata";
 import SiteHeader from "@/components/SiteHeader";
@@ -16,26 +17,49 @@ export const metadata: Metadata = {
     "공사대금·부동산·임대차 등 공간분쟁을 판례와 실무 기준으로 정리하는 법률 저널. 공간분쟁 전문 변호사팀이 직접 씁니다.",
 };
 
+async function CarouselSection() {
+  const posts = await getFeaturedPosts();
+  return <FeaturedCarousel posts={posts} />;
+}
+
+interface ArticleSectionProps {
+  cat?: string;
+  tag?: string;
+  q?: string;
+  archive?: string;
+}
+
+async function ArticleSection({ cat, tag, q, archive }: ArticleSectionProps) {
+  const [result, categoryCounts, archiveDates] = await Promise.all([
+    getPosts({ category: cat, tag, query: q, archive }),
+    getCategoryCounts(),
+    getArchiveDates(),
+  ]);
+  const { posts, total, hasMore } = result;
+
+  return (
+    <ArticleList
+      initialPosts={posts}
+      total={total}
+      hasMore={hasMore}
+      categoryCounts={categoryCounts}
+      archiveDates={archiveDates}
+      filters={{
+        cat: cat ?? "",
+        tag: tag ?? "",
+        q: q ?? "",
+        archive: archive ?? "",
+      }}
+    />
+  );
+}
+
 interface Props {
   searchParams: Promise<{ cat?: string; tag?: string; q?: string; archive?: string }>;
 }
 
 export default async function HomePage({ searchParams }: Props) {
   const sp = await searchParams;
-
-  const [result, categoryCounts, archiveDates, featuredPosts] = await Promise.all([
-    getPosts({
-      category: sp.cat,
-      tag: sp.tag,
-      query: sp.q,
-      archive: sp.archive,
-    }),
-    getCategoryCounts(),
-    getArchiveDates(),
-    getFeaturedPosts(),
-  ]);
-
-  const { posts, total, hasMore } = result;
   const jsonLd = buildSiteJsonLd();
 
   return (
@@ -64,21 +88,13 @@ export default async function HomePage({ searchParams }: Props) {
           </p>
         </section>
 
-        <FeaturedCarousel posts={featuredPosts} />
+        <Suspense fallback={<div style={{ width: "100%", aspectRatio: "21/9", maxHeight: "480px" }} />}>
+          <CarouselSection />
+        </Suspense>
 
-        <ArticleList
-          initialPosts={posts}
-          total={total}
-          hasMore={hasMore}
-          categoryCounts={categoryCounts}
-          archiveDates={archiveDates}
-          filters={{
-            cat: sp.cat ?? "",
-            tag: sp.tag ?? "",
-            q: sp.q ?? "",
-            archive: sp.archive ?? "",
-          }}
-        />
+        <Suspense fallback={<div style={{ minHeight: "60vh" }} />}>
+          <ArticleSection cat={sp.cat} tag={sp.tag} q={sp.q} archive={sp.archive} />
+        </Suspense>
       </main>
 
       <SiteFooter />
