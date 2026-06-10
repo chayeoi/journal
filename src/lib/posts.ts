@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { createStaticClient } from "@/lib/supabase/static";
 import type {
   Post,
@@ -51,115 +52,141 @@ function mapToListItem(
   };
 }
 
-export async function getPosts(params: PostSearchParams = {}): Promise<PostsResult> {
-  const supabase = createStaticClient();
-  const { query, category, tag, archive, page = 1 } = params;
+const _cachedGetPosts = unstable_cache(
+  async (
+    category: string,
+    tag: string,
+    query: string,
+    archive: string,
+    page: number,
+  ): Promise<PostsResult> => {
+    const supabase = createStaticClient();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let q: any = supabase
-    .from("posts")
-    .select(POST_LIST_FIELDS, { count: "exact" })
-    .eq("is_visible", true)
-    .order("published_at", { ascending: false, nullsFirst: false })
-    .order("created_at", { ascending: false });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let q: any = supabase
+      .from("posts")
+      .select(POST_LIST_FIELDS, { count: "exact" })
+      .eq("is_visible", true)
+      .order("published_at", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false });
 
-  if (category) q = q.eq("category", category);
-  if (tag) q = q.contains("tags", [tag]);
-  if (query) {
-    const esc = query.replace(/[%_\\]/g, "\\$&");
-    q = q.or(`title.ilike.%${esc}%,excerpt.ilike.%${esc}%`);
-  }
-  if (archive) {
-    const [y, m] = archive.split("-");
-    const first = `${y}-${m.padStart(2, "0")}-01`;
-    const lastDate = new Date(parseInt(y), parseInt(m), 0);
-    const last = `${lastDate.getFullYear()}-${String(lastDate.getMonth() + 1).padStart(2, "0")}-${String(lastDate.getDate()).padStart(2, "0")}T23:59:59Z`;
-    q = q.gte("published_at", first).lte("published_at", last);
-  }
-
-  const from = (page - 1) * PAGE_SIZE;
-  q = q.range(from, from + PAGE_SIZE - 1);
-
-  const { data, count, error } = await q;
-  if (error) throw error;
-
-  const rows = (data ?? []) as Record<string, unknown>[];
-  const authorIds = [...new Set(rows.map((p) => p.author_id as string | null).filter(Boolean))] as string[];
-  const profilesMap = await fetchAuthors(supabase, authorIds);
-
-  const total = count ?? 0;
-  const posts = rows.map((p) => mapToListItem(p, profilesMap));
-
-  return { posts, total, hasMore: from + posts.length < total };
-}
-
-export async function getCategoryCounts(): Promise<CategoryCount[]> {
-  const supabase = createStaticClient();
-  const { data, error } = await supabase
-    .from("posts")
-    .select("category")
-    .eq("is_visible", true);
-
-  if (error) return [];
-
-  const counts = new Map<string, number>();
-  let total = 0;
-  (data ?? []).forEach((p) => {
-    total++;
-    if (p.category) counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
-  });
-
-  const byCategory: CategoryCount[] = CATEGORY_ORDER
-    .filter((c) => counts.has(c))
-    .map((c) => ({ category: c, count: counts.get(c)! }));
-
-  return [{ category: "all", count: total }, ...byCategory];
-}
-
-export async function getArchiveDates(): Promise<ArchiveDate[]> {
-  const supabase = createStaticClient();
-  const { data, error } = await supabase
-    .from("posts")
-    .select("published_at")
-    .eq("is_visible", true)
-    .not("published_at", "is", null);
-
-  if (error) return [];
-
-  const counts = new Map<string, number>();
-  (data ?? []).forEach((p) => {
-    if (p.published_at) {
-      const key = p.published_at.slice(0, 7);
-      counts.set(key, (counts.get(key) ?? 0) + 1);
+    if (category) q = q.eq("category", category);
+    if (tag) q = q.contains("tags", [tag]);
+    if (query) {
+      const esc = query.replace(/[%_\\]/g, "\\$&");
+      q = q.or(`title.ilike.%${esc}%,excerpt.ilike.%${esc}%`);
     }
-  });
+    if (archive) {
+      const [y, m] = archive.split("-");
+      const first = `${y}-${m.padStart(2, "0")}-01`;
+      const lastDate = new Date(parseInt(y), parseInt(m), 0);
+      const last = `${lastDate.getFullYear()}-${String(lastDate.getMonth() + 1).padStart(2, "0")}-${String(lastDate.getDate()).padStart(2, "0")}T23:59:59Z`;
+      q = q.gte("published_at", first).lte("published_at", last);
+    }
 
-  return Array.from(counts.entries())
-    .sort(([a], [b]) => b.localeCompare(a))
-    .map(([key, count]) => {
-      const [y, mo] = key.split("-");
-      return { key, label: `${y}년 ${parseInt(mo)}월`, count };
+    const from = (page - 1) * PAGE_SIZE;
+    q = q.range(from, from + PAGE_SIZE - 1);
+
+    const { data, count, error } = await q;
+    if (error) throw error;
+
+    const rows = (data ?? []) as Record<string, unknown>[];
+    const authorIds = [...new Set(rows.map((p) => p.author_id as string | null).filter(Boolean))] as string[];
+    const profilesMap = await fetchAuthors(supabase, authorIds);
+
+    const total = count ?? 0;
+    const posts = rows.map((p) => mapToListItem(p, profilesMap));
+
+    return { posts, total, hasMore: from + posts.length < total };
+  },
+  ["posts"],
+  { revalidate: 60 },
+);
+
+export async function getPosts(params: PostSearchParams = {}): Promise<PostsResult> {
+  const { query = "", category = "", tag = "", archive = "", page = 1 } = params;
+  return _cachedGetPosts(category, tag, query, archive, page);
+}
+
+export const getCategoryCounts = unstable_cache(
+  async (): Promise<CategoryCount[]> => {
+    const supabase = createStaticClient();
+    const { data, error } = await supabase
+      .from("posts")
+      .select("category")
+      .eq("is_visible", true);
+
+    if (error) return [];
+
+    const counts = new Map<string, number>();
+    let total = 0;
+    (data ?? []).forEach((p) => {
+      total++;
+      if (p.category) counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
     });
-}
 
-export async function getFeaturedPosts(): Promise<PostListItem[]> {
-  const supabase = createStaticClient();
-  const { data, error } = await supabase
-    .from("posts")
-    .select(POST_LIST_FIELDS)
-    .eq("is_visible", true)
-    .order("published_at", { ascending: false, nullsFirst: false })
-    .order("created_at", { ascending: false })
-    .limit(5);
+    const byCategory: CategoryCount[] = CATEGORY_ORDER
+      .filter((c) => counts.has(c))
+      .map((c) => ({ category: c, count: counts.get(c)! }));
 
-  if (error) return [];
+    return [{ category: "all", count: total }, ...byCategory];
+  },
+  ["category-counts"],
+  { revalidate: 300 },
+);
 
-  const rows = (data ?? []) as Record<string, unknown>[];
-  const authorIds = [...new Set(rows.map((p) => p.author_id as string | null).filter(Boolean))] as string[];
-  const profilesMap = await fetchAuthors(supabase, authorIds);
+export const getArchiveDates = unstable_cache(
+  async (): Promise<ArchiveDate[]> => {
+    const supabase = createStaticClient();
+    const { data, error } = await supabase
+      .from("posts")
+      .select("published_at")
+      .eq("is_visible", true)
+      .not("published_at", "is", null);
 
-  return rows.map((p) => mapToListItem(p, profilesMap));
-}
+    if (error) return [];
+
+    const counts = new Map<string, number>();
+    (data ?? []).forEach((p) => {
+      if (p.published_at) {
+        const key = p.published_at.slice(0, 7);
+        counts.set(key, (counts.get(key) ?? 0) + 1);
+      }
+    });
+
+    return Array.from(counts.entries())
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([key, count]) => {
+        const [y, mo] = key.split("-");
+        return { key, label: `${y}년 ${parseInt(mo)}월`, count };
+      });
+  },
+  ["archive-dates"],
+  { revalidate: 300 },
+);
+
+export const getFeaturedPosts = unstable_cache(
+  async (): Promise<PostListItem[]> => {
+    const supabase = createStaticClient();
+    const { data, error } = await supabase
+      .from("posts")
+      .select(POST_LIST_FIELDS)
+      .eq("is_visible", true)
+      .order("published_at", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    if (error) return [];
+
+    const rows = (data ?? []) as Record<string, unknown>[];
+    const authorIds = [...new Set(rows.map((p) => p.author_id as string | null).filter(Boolean))] as string[];
+    const profilesMap = await fetchAuthors(supabase, authorIds);
+
+    return rows.map((p) => mapToListItem(p, profilesMap));
+  },
+  ["featured-posts"],
+  { revalidate: 60 },
+);
 
 export async function getRelatedPosts(
   postId: string,
@@ -170,7 +197,6 @@ export async function getRelatedPosts(
 ): Promise<PostListItem[]> {
   const supabase = createStaticClient();
 
-  // 태그 겹침 OR 같은 카테고리인 후보 수집
   const orParts: string[] = [];
   if (tags.length > 0) orParts.push(`tags.ov.{${tags.join(",")}}`);
   if (category) orParts.push(`category.eq.${category}`);
@@ -233,7 +259,6 @@ export const getPostByNumber = cache(async function getPostByNumber(postNumber: 
   return { ...data, tags: data.tags ?? [], author } as Post;
 });
 
-// 빌드 타임 / sitemap 용 — 쿠키 없이 호출
 export async function getAllPostNumbers(): Promise<number[]> {
   const supabase = createStaticClient();
   const { data, error } = await supabase
