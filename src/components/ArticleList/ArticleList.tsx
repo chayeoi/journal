@@ -18,6 +18,7 @@ interface Props {
   initialPosts: PostListItem[];
   total: number;
   hasMore: boolean;
+  initialPage?: number;
   categoryCounts: CategoryCount[];
   archiveDates: ArchiveDate[];
   filters: Filters;
@@ -29,6 +30,7 @@ function ArticleList({
   initialPosts,
   total,
   hasMore: initialHasMore,
+  initialPage = 1,
   categoryCounts,
   archiveDates,
   filters,
@@ -37,7 +39,7 @@ function ArticleList({
   const [posts, setPosts] = useState(initialPosts);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(initialPage);
   const [localQ, setLocalQ] = useState(filters.q);
   const [fmoreOpen, setFmoreOpen] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -45,8 +47,8 @@ function ArticleList({
   useEffect(() => {
     setPosts(initialPosts);
     setHasMore(initialHasMore);
-    setPage(1);
-  }, [initialPosts, initialHasMore]);
+    setPage(initialPage);
+  }, [initialPosts, initialHasMore, initialPage]);
 
   useEffect(() => {
     setLocalQ(filters.q);
@@ -116,6 +118,8 @@ function ArticleList({
       setPosts((prev) => [...prev, ...data.posts]);
       setHasMore(data.hasMore);
       setPage(nextPage);
+      // URL에 page 파라미터 저장 — 뒤로 가기 후 돌아왔을 때 상태 복원에 사용됨
+      router.replace(`/?${params.toString()}`, { scroll: false });
     } catch {
       // 실패 시 현재 상태 유지
     } finally {

@@ -76,4 +76,5 @@ export type PostSearchParams = {
   query?: string;
   archive?: string; // "YYYY-MM"
   page?: number;
+  upToPage?: number; // 초기 로드 시 1~N 페이지를 한 번에 가져옴
 };
