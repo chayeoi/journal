@@ -27,11 +27,13 @@ interface ArticleSectionProps {
   tag?: string;
   q?: string;
   archive?: string;
+  page?: string;
 }
 
-async function ArticleSection({ cat, tag, q, archive }: ArticleSectionProps) {
+async function ArticleSection({ cat, tag, q, archive, page }: ArticleSectionProps) {
+  const upToPage = Math.max(1, parseInt(page ?? "1", 10));
   const [result, categoryCounts, archiveDates] = await Promise.all([
-    getPosts({ category: cat, tag, query: q, archive }),
+    getPosts({ category: cat, tag, query: q, archive, upToPage }),
     getCategoryCounts(),
     getArchiveDates(),
   ]);
@@ -42,6 +44,7 @@ async function ArticleSection({ cat, tag, q, archive }: ArticleSectionProps) {
       initialPosts={posts}
       total={total}
       hasMore={hasMore}
+      initialPage={upToPage}
       categoryCounts={categoryCounts}
       archiveDates={archiveDates}
       filters={{
@@ -55,7 +58,7 @@ async function ArticleSection({ cat, tag, q, archive }: ArticleSectionProps) {
 }
 
 interface Props {
-  searchParams: Promise<{ cat?: string; tag?: string; q?: string; archive?: string }>;
+  searchParams: Promise<{ cat?: string; tag?: string; q?: string; archive?: string; page?: string }>;
 }
 
 export default async function HomePage({ searchParams }: Props) {
@@ -93,7 +96,7 @@ export default async function HomePage({ searchParams }: Props) {
         </Suspense>
 
         <Suspense fallback={<div style={{ minHeight: "60vh" }} />}>
-          <ArticleSection cat={sp.cat} tag={sp.tag} q={sp.q} archive={sp.archive} />
+          <ArticleSection cat={sp.cat} tag={sp.tag} q={sp.q} archive={sp.archive} page={sp.page} />
         </Suspense>
       </main>
 

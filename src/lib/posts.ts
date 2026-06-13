@@ -59,6 +59,7 @@ const _cachedGetPosts = unstable_cache(
     query: string,
     archive: string,
     page: number,
+    upToPage: number,
   ): Promise<PostsResult> => {
     const supabase = createStaticClient();
 
@@ -84,8 +85,10 @@ const _cachedGetPosts = unstable_cache(
       q = q.gte("published_at", first).lte("published_at", last);
     }
 
-    const from = (page - 1) * PAGE_SIZE;
-    q = q.range(from, from + PAGE_SIZE - 1);
+    // upToPage가 1보다 크면 1~upToPage 페이지 전체를 한 번에 가져옴 (뒤로 가기 상태 복원용)
+    const from = upToPage > 1 ? 0 : (page - 1) * PAGE_SIZE;
+    const to = upToPage > 1 ? upToPage * PAGE_SIZE - 1 : from + PAGE_SIZE - 1;
+    q = q.range(from, to);
 
     const { data, count, error } = await q;
     if (error) throw error;
@@ -97,15 +100,15 @@ const _cachedGetPosts = unstable_cache(
     const total = count ?? 0;
     const posts = rows.map((p) => mapToListItem(p, profilesMap));
 
-    return { posts, total, hasMore: from + posts.length < total };
+    return { posts, total, hasMore: to + 1 < total };
   },
   ["posts"],
   { revalidate: 60 },
 );
 
 export async function getPosts(params: PostSearchParams = {}): Promise<PostsResult> {
-  const { query = "", category = "", tag = "", archive = "", page = 1 } = params;
-  return _cachedGetPosts(category, tag, query, archive, page);
+  const { query = "", category = "", tag = "", archive = "", page = 1, upToPage = 0 } = params;
+  return _cachedGetPosts(category, tag, query, archive, page, upToPage);
 }
 
 export const getCategoryCounts = unstable_cache(
