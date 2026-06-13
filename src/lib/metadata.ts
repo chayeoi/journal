@@ -27,6 +27,9 @@ export const defaultMetadata: Metadata = {
     "max-snippet": -1,
   },
   alternates: { canonical: SITE_URL },
+  verification: {
+    other: { "naver-site-verification": "71b06ceb8098a274ce44eeb4dd9a18f917ebd162" },
+  },
 };
 
 export function buildSiteJsonLd() {
