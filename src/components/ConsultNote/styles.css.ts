@@ -26,7 +26,6 @@ const desc = style({
   color: 'var(--fg-2)',
   lineHeight: 1.55,
   marginTop: 6,
-  maxWidth: '46ch',
 });
 
 const btn = style({
