@@ -37,6 +37,7 @@ a.plain, .plain { color: inherit; }
   font-weight: 700; letter-spacing: 0; font-family: var(--font-serif);
 }
 .avatar--accent { background: var(--accent); }
+.avatar--dark { background: #000; }
 
 /* highlighter under a keyword in the masthead */
 .hl {

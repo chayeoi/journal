@@ -157,7 +157,7 @@ export default async function PostPage({ params }: Props) {
                     />
                   ) : (
                     <span
-                      className="avatar avatar--accent"
+                      className="avatar avatar--dark"
                       style={{ width: 56, height: 56, fontSize: 24, fontWeight: 700 }}
                       aria-hidden="true"
                     >
