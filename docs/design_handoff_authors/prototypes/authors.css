@@ -1,0 +1,120 @@
+/* ============================================================
+   AUCTORITAS LAB — 집필진(작가) 레이어
+   /authors (목록) · /authors/{id} (상세) — E-E-A-T 저자 페이지.
+   journal.css / ds-system.css 토큰 위에 얹는다. 새 색·간격 만들지 않음.
+   ============================================================ */
+
+/* ---------- 공통: 리스트 헤더 위 eyebrow ---------- */
+.listhead .eyebrow { display: inline-block; margin-bottom: 14px; }
+.listhead--authors { padding-bottom: 36px; border-bottom: none; }
+.listhead--authors p { max-width: none; }
+
+/* 작가 폴백 아바타: 검은 배경 + 흰 글씨 (journal.css에 없으므로 여기서 정의) */
+.avatar--dark { background: #000; color: #fff; }
+
+/* ============================================================
+   작가 목록 (/authors) — 위에서 아래로 흐르는 로스터 리스트
+   ============================================================ */
+.author-list {
+  display: flex; flex-direction: column;
+  padding: 32px 0 8px;
+}
+
+.acard { position: relative; }
+.acard__link {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center;
+  gap: clamp(16px, 3vw, 32px);
+  text-decoration: none; color: inherit;
+  padding: 26px 16px; border-radius: var(--r-card);
+  border: 1px solid transparent;
+  transition: background var(--d) var(--ease), border-color var(--d) var(--ease), box-shadow var(--d) var(--ease), transform var(--d) var(--ease);
+}
+html[data-shape="sharp"] .acard__link { border-radius: 4px; }
+
+/* --- 리스트 스타일 옵션 (data-acard, Tweaks로 전환) --- */
+/* lines(기본): 헤어라인 구분선만 둔 정갈한 리스트 */
+html[data-acard="plain"] .acard { border-bottom: 1px solid var(--line-2); }
+html[data-acard="plain"] .acard__link { border-radius: 0; }
+html[data-acard="plain"] .acard__link:hover { background: var(--surface-2); }
+/* filled: 행마다 면으로 채운 카드 */
+html[data-acard="filled"] .author-list { gap: 12px; }
+html[data-acard="filled"] .acard__link { background: var(--surface-2); }
+html[data-acard="filled"] .acard__link:hover { background: var(--n-02); }
+/* border: 행마다 헤어라인 보더 카드 */
+html[data-acard="border"] .author-list { gap: 12px; }
+html[data-acard="border"] .acard__link { border-color: var(--line); }
+html[data-acard="border"] .acard__link:hover { border-color: var(--ink); }
+/* shadow: 행마다 부드러운 그림자 카드 */
+html[data-acard="shadow"] .author-list { gap: 14px; }
+html[data-acard="shadow"] .acard__link { box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 12px 28px -14px rgba(0,0,0,0.16); }
+html[data-acard="shadow"] .acard__link:hover { box-shadow: 0 2px 4px rgba(0,0,0,0.04), 0 20px 40px -18px rgba(0,0,0,0.2); transform: translateY(-2px); }
+
+/* 아바타 (col 1) — 첫 글자는 sans-serif (journal.css의 .avatar는 serif 기본) */
+.acard .avatar, .acard__avatar, .aprofile__avatar { font-family: var(--font); font-weight: 700; }
+.acard__avatar { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+
+/* 본문 (col 2) — 이름 + 약력 */
+.acard__main { min-width: 0; }
+.acard__name {
+  position: relative; display: inline; font-size: 20px; font-weight: 800;
+  letter-spacing: -0.02em; color: var(--ink); background-size: 0% 1px;
+  background-position: 0 100%; background-repeat: no-repeat;
+  background-image: linear-gradient(var(--ink), var(--ink));
+  transition: background-size var(--d) var(--ease);
+}
+.acard__link:hover .acard__name { background-size: 100% 1px; }
+.acard__bio {
+  margin-top: 6px;
+  font-size: 14.5px; line-height: 1.6; color: var(--fg-2); word-break: keep-all;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* 메타 (col 3) — 화살표 affordance */
+.acard__go { display: inline-flex; color: var(--n-06); transition: transform var(--d) var(--ease), color var(--d) var(--ease); }
+.acard__go svg { width: 20px; height: 20px; }
+.acard__link:hover .acard__go { transform: translateX(4px); color: var(--ink); }
+
+@media (max-width: 560px) {
+  .acard__link { gap: 14px; padding: 22px 12px; }
+  .acard__avatar, .acard .avatar { width: 48px !important; height: 48px !important; font-size: 19px !important; }
+}
+
+/* ============================================================
+   작가 상세 (/authors/{id})
+   ============================================================ */
+.aprofile {
+  display: grid; grid-template-columns: auto 1fr; gap: clamp(24px, 4vw, 48px);
+  align-items: center; padding: 40px 0 36px;
+}
+.aprofile__avatar { width: clamp(96px, 14vw, 124px); height: clamp(96px, 14vw, 124px); }
+.aprofile__avatar.avatar { font-size: clamp(42px, 6vw, 54px); }
+.aprofile__avatar--img { border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.aprofile__text { min-width: 0; }
+.aprofile__eyebrow { color: var(--fg-3); margin-bottom: 14px; }
+.aprofile__name { font-size: clamp(30px, 4.4vw, 48px); font-weight: 800; letter-spacing: -0.035em; line-height: 1.05; color: var(--ink); }
+.aprofile__bio {
+  margin-top: 18px; font-size: clamp(15.5px, 1.7vw, 18px); line-height: 1.6;
+  color: var(--fg-2); letter-spacing: -0.01em; word-break: keep-all;
+}
+.aprofile__meta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 22px;
+  font-size: 13.5px; color: var(--fg-3);
+}
+.aprofile__meta > span, .aprofile__meta > a { white-space: nowrap; }
+.aprofile__meta b { color: var(--ink); font-weight: 700; }
+.aprofile__meta a { color: var(--fg-2); text-decoration: none; }
+.aprofile__meta a:hover { color: var(--accent); }
+.aprofile__meta .dotsep { color: var(--n-06); }
+
+@media (max-width: 620px) {
+  .aprofile { grid-template-columns: 1fr; gap: 20px; text-align: left; padding-top: 28px; }
+}
+
+/* ---------- 집필 글 섹션 ---------- */
+.aposts { padding: 56px 0 0; }
+.aposts .sec__head { margin-bottom: 8px; }
+
+/* 빈 상태 */
+.author-empty { padding: 80px 0; text-align: center; }
+.author-empty h3 { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; color: var(--ink); }
+.author-empty p { margin-top: 10px; font-size: 15px; color: var(--fg-2); }

@@ -272,3 +272,14 @@ export async function getAllPostNumbers(): Promise<number[]> {
   if (error) return [];
   return (data ?? []).map((p) => p.post_number);
 }
+
+export async function getAllPostSlugs(): Promise<{ post_number: number; updated_at: string }[]> {
+  const supabase = createStaticClient();
+  const { data, error } = await supabase
+    .from("posts")
+    .select("post_number, updated_at")
+    .eq("is_visible", true);
+
+  if (error) return [];
+  return (data ?? []).map((p) => ({ post_number: p.post_number, updated_at: p.updated_at }));
+}

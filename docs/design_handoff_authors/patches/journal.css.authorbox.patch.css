@@ -1,0 +1,19 @@
+/* ============================================================
+   PATCH — journal.css 의 .authorbox 를 "클릭 가능한 작가 링크"로
+   포스트 상세(/posts/{slug})의 작가 박스를 /authors/{id} 로 연결한다.
+   기존 .authorbox 블록을 아래 내용으로 교체.
+   ============================================================ */
+
+.authorbox {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 20px; align-items: center;
+  padding: 32px 0; border-bottom: 1px solid var(--line);
+  text-decoration: none; color: inherit;
+}
+.authorbox .avatar { font-family: var(--font); font-weight: 700; }
+.authorbox__name { font-size: 17px; font-weight: 800; color: var(--ink); transition: color var(--d) var(--ease); }
+.authorbox:hover .authorbox__name { color: var(--accent-strong); text-decoration: underline; text-underline-offset: 3px; }
+.authorbox__role { font-size: 13px; font-weight: 600; color: var(--accent); margin-top: 2px; }
+.authorbox__bio { font-size: 14.5px; line-height: 1.6; color: var(--fg-2); margin-top: 12px; word-break: keep-all; }
+.authorbox__go { align-self: center; display: inline-flex; color: var(--n-06); transition: transform var(--d) var(--ease), color var(--d) var(--ease); }
+.authorbox__go svg { width: 20px; height: 20px; }
+.authorbox:hover .authorbox__go { transform: translateX(4px); color: var(--ink); }

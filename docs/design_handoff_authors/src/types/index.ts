@@ -5,13 +5,6 @@ export type Profile = {
   avatar_url: string | null;
 };
 
-export type FaqItem = { q: string; a: string };
-
-export type MentionItem = {
-  type: "CreativeWork" | "Legislation";
-  name: string;
-};
-
 export type Post = {
   id: string;
   post_number: number;
@@ -29,8 +22,6 @@ export type Post = {
   created_at: string;
   updated_at: string;
   tags: string[];
-  faq: FaqItem[] | null;
-  mentions: MentionItem[] | null;
   author?: Profile;
 };
 

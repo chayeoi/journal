@@ -13,7 +13,6 @@ import TocWatcher from "@/components/TocWatcher";
 import PageInit from "@/components/PageInit";
 import TweaksPanel from "@/components/TweaksPanel";
 import PostCard from "@/components/PostCard";
-import FaqSection from "@/components/FaqSection";
 
 export const revalidate = 60;
 export const dynamicParams = true;
@@ -124,8 +123,8 @@ export default async function PostPage({ params }: Props) {
             <div className="artrail" />
           )}
 
-          <article className="post-article">
-            <div
+          <div>
+            <article
               className="prose"
               id="prose"
               dangerouslySetInnerHTML={{ __html: processedContent }}
@@ -146,8 +145,6 @@ export default async function PostPage({ params }: Props) {
                 </div>
               )}
 
-              <FaqSection faq={post.faq} />
-
               {post.author && (
                 <Link className="authorbox" href={`/authors/${post.author.id}`} aria-label={`${authorName} 프로필 보기`}>
                   {post.author.avatar_url ? (
@@ -161,7 +158,7 @@ export default async function PostPage({ params }: Props) {
                   ) : (
                     <span
                       className="avatar avatar--dark"
-                      style={{ width: 56, height: 56, fontSize: 24, fontWeight: 700, fontFamily: "var(--font)" }}
+                      style={{ width: 56, height: 56, fontSize: 24, fontWeight: 700 }}
                       aria-hidden="true"
                     >
                       {authorName.charAt(0)}
@@ -179,7 +176,7 @@ export default async function PostPage({ params }: Props) {
 
               {/* <ConsultNote /> */}
             </div>
-          </article>
+          </div>
         </div>
 
         {relatedPosts.length > 0 && (

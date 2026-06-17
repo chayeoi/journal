@@ -20,6 +20,7 @@ function SiteFooter() {
             <h4>저널</h4>
             <div className={styles.contact}>
               <Link href="/">홈</Link>
+              <Link href="/authors">집필진</Link>
               <a href="https://instagram.com/auctoritas_journal" target="_blank" rel="noopener">
                 <span dangerouslySetInnerHTML={{ __html: ICON.insta }} />
                 <span>@auctoritas_journal</span>

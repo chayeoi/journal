@@ -1,0 +1,38 @@
+/* footer.js — shared site footer for AUCTORITAS LAB (renders into #footer) */
+function renderFooter(){
+  var c = SITE.contact;
+  var html = ''
+  + '<footer class="site-footer" id="site-footer">'
+  + '  <div class="site-footer__in">'
+  + '    <div class="footer-grid">'
+  + '      <div class="footer-brand">'
+  + '        <a class="brand" href="index.html">AUCTORITAS LAB</a>'
+  + '        <p class="footer-about">' + SITE.tagline + '. 공사대금·부동산·임대차 등 공간을 둘러싼 분쟁을 판례와 실무 기준으로 기록합니다.</p>'
+  + '        <p class="footer-quote">공간을 둘러싼 분쟁, 법으로 풀어내다.</p>'
+  + '      </div>'
+  + '      <div class="footer-col">'
+  + '        <h4>저널</h4>'
+  + '        <div class="footer-contact">'
+  + '          <a href="index.html">홈</a>'
+  + '          <a href="authors.html">집필진</a>'
+  + '          <a href="' + c.instagramUrl + '" target="_blank" rel="noopener">' + ICON.insta + '<span>@auctoritas_journal</span></a>'
+  + '          <a href="' + SITE.team.url + '" target="_blank" rel="noopener">' + ICON.link + '<span>' + SITE.team.label + '</span></a>'
+  + '        </div>'
+  + '      </div>'
+  + '      <div class="footer-col">'
+  + '        <h4>문의</h4>'
+  + '        <div class="footer-contact">'
+  + '          <a href="tel:' + c.tel.replace(/-/g,'') + '">' + ICON.phone + '<span>' + c.tel + '</span></a>'
+  + '          <span>' + ICON.phone + '<span>' + c.fax + ' (FAX)</span></span>'
+  + '          <a href="mailto:' + c.email + '">' + ICON.mail + '<span>' + c.email + '</span></a>'
+  + '          <span>' + ICON.pin + '<span>' + c.address + '</span></span>'
+  + '        </div>'
+  + '      </div>'
+  + '    </div>'
+  + '  </div>'
+  + '  <div class="footer-bottom">'
+  + '    <span>© ' + new Date().getFullYear() + ' AUCTORITAS LAB. 본 저널의 글은 일반적 정보 제공을 목적으로 하며, 개별 사안에 대한 법률자문을 대체하지 않습니다.</span>'
+  + '  </div>'
+  + '</footer>';
+  document.getElementById('footer').outerHTML = html;
+}

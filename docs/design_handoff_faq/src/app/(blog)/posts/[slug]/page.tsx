@@ -13,7 +13,7 @@ import TocWatcher from "@/components/TocWatcher";
 import PageInit from "@/components/PageInit";
 import TweaksPanel from "@/components/TweaksPanel";
 import PostCard from "@/components/PostCard";
-import FaqSection from "@/components/FaqSection";
+import FaqSection from "@/components/FaqSection"; // ← 추가
 
 export const revalidate = 60;
 export const dynamicParams = true;
@@ -41,6 +41,8 @@ export default async function PostPage({ params }: Props) {
   const headings = extractHeadings(post.content);
   const processedContent = injectHeadingIds(post.content);
   const readingTime = post.reading_minutes ?? 1;
+  // buildPostJsonLd 가 post.faq 를 받아 FAQPage 노드를 @graph 에 합친다.
+  // (metadata.faq.patch.ts 참조 — 별도 <script> 불필요)
   const jsonLd = buildPostJsonLd(post);
 
   const authorName = post.author?.display_name ?? "AUCTORITAS";
@@ -124,7 +126,11 @@ export default async function PostPage({ params }: Props) {
             <div className="artrail" />
           )}
 
+          {/* ── 변경: 글 전체를 <article> 로 감싼다. tags·FAQ·authorbox 가
+               모두 article 시맨틱 범위 안에 들어가 SEO/AEO 신호가 강해진다. ── */}
           <article className="post-article">
+            {/* ── 변경: 본문은 <article className="prose"> → <div className="prose">.
+                 (바깥 <article> 와 중첩 방지) ── */}
             <div
               className="prose"
               id="prose"
@@ -146,6 +152,8 @@ export default async function PostPage({ params }: Props) {
                 </div>
               )}
 
+              {/* ── 신규: FAQ 섹션 (태그 다음 · 작가 박스 앞).
+                   post.faq 가 null/빈 배열이면 컴포넌트가 스스로 null 렌더. ── */}
               <FaqSection faq={post.faq} />
 
               {post.author && (
@@ -161,7 +169,7 @@ export default async function PostPage({ params }: Props) {
                   ) : (
                     <span
                       className="avatar avatar--dark"
-                      style={{ width: 56, height: 56, fontSize: 24, fontWeight: 700, fontFamily: "var(--font)" }}
+                      style={{ width: 56, height: 56, fontSize: 24, fontWeight: 700 }}
                       aria-hidden="true"
                     >
                       {authorName.charAt(0)}
