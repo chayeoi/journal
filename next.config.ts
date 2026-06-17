@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
     root: __dirname,
   },
   images: {
+    loader: "custom",
+    loaderFile: "./src/lib/supabaseImageLoader.ts",
     remotePatterns: [
       {
         protocol: "https",
