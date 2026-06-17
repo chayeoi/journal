@@ -41,11 +41,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: FOUC_SCRIPT }} />
       </head>
-      <body suppressHydrationWarning>
-        {children}
+      <body>
         {process.env.NEXT_PUBLIC_GA_ID && (
           <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
         )}
+        {children}
       </body>
     </html>
   );
