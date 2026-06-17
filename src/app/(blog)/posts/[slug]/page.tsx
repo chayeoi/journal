@@ -98,11 +98,10 @@ export default async function PostPage({ params }: Props) {
               <Image
                 src={post.thumbnail_url}
                 alt=""
-                width={1600}
-                height={900}
+                fill
                 priority
                 sizes="(max-width: 720px) 100vw, 1180px"
-                style={{ width: "100%", height: "auto" }}
+                style={{ objectFit: "cover" }}
               />
             </figure>
           )}
