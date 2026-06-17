@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import type { Post, FaqItem, MentionItem, AuthorDetail, AuthorListItem } from "@/types";
+import type { Post, AuthorDetail, AuthorListItem } from "@/types";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://journal.fightingspirit.kr";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://fightingspirit.kr";
 const SITE_NAME = "AUCTORITAS LAB";
 const SITE_DESCRIPTION =
   "공사대금·부동산·임대차 등 공간분쟁을 판례와 실무 기준으로 정리하는 법률 저널. 공간분쟁 전문 변호사팀이 직접 씁니다.";
@@ -35,37 +35,23 @@ export const defaultMetadata: Metadata = {
 export function buildSiteJsonLd() {
   return {
     "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "LegalService",
-        name: "AUCTORITAS LAB",
-        description: SITE_DESCRIPTION,
-        url: SITE_URL,
-        telephone: "+82-31-546-3997",
-        faxNumber: "+82-31-546-3998",
-        email: "info@fightingspirit.kr",
-        areaServed: "KR",
-        knowsAbout: ["공사대금", "부동산매매", "임대차", "재개발", "명도소송", "유치권"],
-        address: {
-          "@type": "PostalAddress",
-          streetAddress: "광교중앙로 248번길 7-2 원희캐슬법조타운 B동 401호",
-          addressLocality: "수원시 영통구",
-          addressRegion: "경기도",
-          addressCountry: "KR",
-        },
-        sameAs: ["https://fightingspirit.kr", "https://instagram.com/auctoritas_journal"],
-      },
-      {
-        "@type": "WebSite",
-        name: SITE_NAME,
-        url: SITE_URL,
-        potentialAction: {
-          "@type": "SearchAction",
-          target: `${SITE_URL}/?q={search_term_string}`,
-          "query-input": "required name=search_term_string",
-        },
-      },
-    ],
+    "@type": "LegalService",
+    name: "AUCTORITAS LAB",
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+    telephone: "+82-31-546-3997",
+    faxNumber: "+82-31-546-3998",
+    email: "info@fightingspirit.kr",
+    areaServed: "KR",
+    knowsAbout: ["공사대금", "부동산매매", "임대차", "재개발", "명도소송", "유치권"],
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "광교중앙로 248번길 7-2 원희캐슬법조타운 B동 401호",
+      addressLocality: "수원시 영통구",
+      addressRegion: "경기도",
+      addressCountry: "KR",
+    },
+    sameAs: ["https://fightingspirit.kr", "https://instagram.com/auctoritas_journal"],
   };
 }
 
@@ -104,33 +90,13 @@ export function buildPostMetadata(post: Post): Metadata {
       images: post.thumbnail_url ? [post.thumbnail_url] : undefined,
     },
     alternates: {
-      canonical: `${SITE_URL}/posts/${post.post_number}`,
+      canonical: `${SITE_URL}/posts/${post.id}`,
     },
   };
 }
 
 export function buildPostJsonLd(post: Post) {
   const excerpt = getExcerpt(post.content);
-
-  const faqNodes =
-    Array.isArray(post.faq) && post.faq.length > 0
-      ? [
-          {
-            "@type": "FAQPage",
-            mainEntity: post.faq.map((item: FaqItem) => ({
-              "@type": "Question",
-              name: item.q,
-              acceptedAnswer: { "@type": "Answer", text: item.a },
-            })),
-          },
-        ]
-      : [];
-
-  const mentionEntities =
-    Array.isArray(post.mentions) && post.mentions.length > 0
-      ? post.mentions.map((m: MentionItem) => ({ "@type": m.type, name: m.name }))
-      : undefined;
-
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -143,10 +109,6 @@ export function buildPostJsonLd(post: Post) {
         dateModified: post.updated_at,
         inLanguage: "ko",
         keywords: (post.tags ?? []).join(", ") || undefined,
-        about: post.tags?.length > 0
-          ? post.tags.map((t) => ({ "@type": "Thing", name: t }))
-          : undefined,
-        mentions: mentionEntities,
         author: post.author
           ? {
               "@type": "Person",
@@ -162,11 +124,7 @@ export function buildPostJsonLd(post: Post) {
         },
         mainEntityOfPage: {
           "@type": "WebPage",
-          "@id": `${SITE_URL}/posts/${post.post_number}`,
-        },
-        speakable: {
-          "@type": "SpeakableSpecification",
-          cssSelector: [".arthead__title", ".arthead__meta"],
+          "@id": `${SITE_URL}/posts/${post.id}`,
         },
       },
       {
@@ -176,10 +134,13 @@ export function buildPostJsonLd(post: Post) {
           { "@type": "ListItem", position: 2, name: post.title },
         ],
       },
-      ...faqNodes,
     ],
   };
 }
+
+// ============================================================
+//  AUTHORS — E-E-A-T 저자 메타데이터 / 구조화 데이터
+// ============================================================
 
 const AUTHORS_TITLE = "집필진";
 const AUTHORS_DESC =
@@ -198,7 +159,7 @@ export const authorsListMetadata: Metadata = {
   alternates: { canonical: `${SITE_URL}/authors` },
 };
 
-/** /authors — CollectionPage + ItemList<Person>. */
+/** /authors — CollectionPage + ItemList<Person> (각 저자를 검색엔진에 사람으로 노출). */
 export function buildAuthorsListJsonLd(authors: AuthorListItem[]) {
   return {
     "@context": "https://schema.org",

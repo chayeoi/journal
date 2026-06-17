@@ -1,11 +1,14 @@
 import type { MetadataRoute } from "next";
-import { getAllPostSlugs } from "@/lib/posts";
+import { getAllPostNumbers } from "@/lib/posts";
 import { getAllAuthorIds } from "@/lib/authors";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://journal.fightingspirit.kr";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://fightingspirit.kr";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [slugs, authorIds] = await Promise.all([getAllPostSlugs(), getAllAuthorIds()]);
+  const [numbers, authorIds] = await Promise.all([
+    getAllPostNumbers(),
+    getAllAuthorIds(),
+  ]);
 
   return [
     {
@@ -17,18 +20,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url: `${SITE_URL}/authors`,
       lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.6,
+      changeFrequency: "weekly",
+      priority: 0.7,
     },
     ...authorIds.map((id) => ({
       url: `${SITE_URL}/authors/${id}`,
       lastModified: new Date(),
       changeFrequency: "weekly" as const,
-      priority: 0.7,
+      priority: 0.6,
     })),
-    ...slugs.map(({ post_number, updated_at }: { post_number: number; updated_at: string }) => ({
-      url: `${SITE_URL}/posts/${post_number}`,
-      lastModified: new Date(updated_at),
+    ...numbers.map((n) => ({
+      url: `${SITE_URL}/posts/${n}`,
+      lastModified: new Date(),
       changeFrequency: "weekly" as const,
       priority: 0.8,
     })),

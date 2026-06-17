@@ -15,6 +15,7 @@ const FOUC_SCRIPT = `(function(){try{
   r.setAttribute("data-shape","rounded");
   r.setAttribute("data-carousel","overlay");
   r.setAttribute("data-card","list");
+  r.setAttribute("data-acard","plain");
   r.setAttribute("data-filter","rail");
   r.setAttribute("data-tagstyle",d.tagstyle||"hash");
   if(d.reading)r.setAttribute("data-reading",d.reading);
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       data-shape="rounded"
       data-carousel="overlay"
       data-card="list"
+      data-acard="plain"
       data-thumb="on"
       data-filter="rail"
       data-tagstyle="hash"

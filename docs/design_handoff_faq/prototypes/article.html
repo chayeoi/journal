@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ko" data-page="detail" data-shape="rounded" data-card="list" data-thumb="on" data-cover="overlay" data-reading="railed" data-tagstyle="hash" data-font="pretendard" style="--accent:#3B82F6">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>아티클 — AUCTORITAS LAB</title>
+<meta name="description" content="공간분쟁 판례·실무 아티클">
+<meta name="author" content="AUCTORITAS LAB">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="AUCTORITAS LAB">
+<link rel="stylesheet" href="ds-system.css">
+<link rel="stylesheet" href="journal.css">
+<script type="application/ld+json" id="ld-article"></script>
+<script>(function(){try{var d=JSON.parse(localStorage.getItem("auctoritas.tweaks.v4")||"{}");var r=document.documentElement;r.setAttribute("data-shape","rounded");r.setAttribute("data-card","list");r.setAttribute("data-tagstyle",d.tagstyle||"hash");
+r.style.setProperty("--accent","#3B82F6");
+r.setAttribute("data-cover","overlay");
+["font","shape","card","reading","thumb"].forEach(function(k){if(d[k])r.setAttribute("data-"+k,d[k]);});}catch(e){}})();</script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header__in">
+    <a class="brand" href="index.html">AUCTORITAS LAB</a>
+    <span class="site-header__spacer"></span>
+    <a class="site-header__cta" href="#site-footer"><span>상담 문의</span></a>
+  </div>
+</header>
+
+<main class="wrap" id="article-main"></main>
+
+<div id="footer"></div>
+<div id="tweaks-root"></div>
+
+<script src="data.js"></script>
+<script src="footer.js"></script>
+<script>
+function getArticle(){
+  var id = new URLSearchParams(location.search).get("id");
+  return ARTICLES.find(function(a){return a.id===id;}) || byNewest(ARTICLES)[0];
+}
+
+function slugify(s, i){ return "sec-" + (i+1); }
+
+function renderBody(article){
+  var headings = [];
+  var hi = 0;
+  var html = article.body.map(function(item){
+    if (typeof item === "string") return item;            // already <p>…</p>
+    var kind = item[0];
+    if (kind === "h2"){
+      var id = slugify(item[1], hi);
+      headings.push({ id:id, text:item[1] });
+      hi++;
+      return '<h2 id="'+id+'">'+item[1]+'</h2>';
+    }
+    if (kind === "h3") return '<h3>'+item[1]+'</h3>';
+    if (kind === "callout"){
+      return '<aside class="pcallout"><div class="pcallout__icon">'+ICON.quote+'</div>'
+        + '<div><div class="pcallout__label">'+item[1]+'</div><div class="pcallout__text">'+item[2]+'</div></div></aside>';
+    }
+    if (kind === "blockquote") return '<blockquote>'+item[1]+'</blockquote>';
+    if (kind === "ul") return '<ul>'+item[1].map(function(li){return '<li>'+li+'</li>';}).join('')+'</ul>';
+    return '';
+  }).join('');
+  return { html: html, headings: headings };
+}
+
+function render(){
+  var a = getArticle();
+  var cat = CAT_OF(a), au = AUTHOR_OF(a);
+  document.title = a.title + " — AUCTORITAS LAB";
+  var built = renderBody(a);
+
+  var toc = built.headings.length
+    ? '<nav class="artrail" aria-label="목차"><div class="toc__label">목차</div><div class="toc" id="toc">'
+      + built.headings.map(function(h){ return '<a href="#'+h.id+'">'+h.text+'</a>'; }).join('')
+      + '</div></nav>'
+    : '<div class="artrail"></div>';
+
+  var tags = a.tags.map(function(t){ return '<a class="ptag" href="index.html?tag='+encodeURIComponent(t)+'">'+t+'</a>'; }).join('');
+
+  // FAQ 섹션 — a.faq 가 있고 비어있지 않을 때만. (태그 다음 · 작가 박스 앞)
+  var CHEVRON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+  var faqHtml = '';
+  if (a.faq && a.faq.length){
+    faqHtml = '<section class="artfaq" aria-labelledby="artfaq-h">'
+      + '<h2 class="artfaq__eyebrow" id="artfaq-h">자주 묻는 질문</h2>'
+      + '<div class="artfaq__list">'
+      + a.faq.map(function(item, i){
+          return '<details class="faqq" name="article-faq"'+(i===0?' open':'')+'>'
+            + '<summary class="faqq__q">'
+            +   '<span class="faqq__mark" aria-hidden="true">Q</span>'
+            +   '<span class="faqq__qt">'+item.q+'</span>'
+            +   '<span class="faqq__chev" aria-hidden="true">'+CHEVRON+'</span>'
+            + '</summary>'
+            + '<div class="faqq__a">'
+            +   '<span class="faqq__mark faqq__mark--a" aria-hidden="true">A</span>'
+            +   '<p class="faqq__at">'+item.a+'</p>'
+            + '</div>'
+            + '</details>';
+        }).join('')
+      + '</div></section>';
+  }
+
+  var related = relatedTo(a, 3);
+  var relHtml = '<section class="related wrap" aria-labelledby="rel-h" style="padding-left:0;padding-right:0;">'
+    + '<div class="sec__head"><div><h2 class="sec__title" id="rel-h">관련 아티클</h2>'
+    + '<p class="sec__sub">이 글과 함께 읽으면 좋은 판례·실무</p></div>'
+    + '<a class="sec__link" href="index.html#articles">아티클 전체 <span aria-hidden="true">→</span></a></div>'
+    + '<div class="cardgrid">'+related.map(function(r,i){return cardHTML(r,{index:i});}).join('')+'</div>'
+    + '</section>';
+
+  document.getElementById('article-main').innerHTML = ''
+    + '<nav class="breadcrumb" aria-label="위치"><a href="index.html">홈</a><span aria-hidden="true">›</span>'
+    +   '<a href="index.html?cat='+a.category+'">'+cat.name+'</a><span aria-hidden="true">›</span><span>'+a.title+'</span></nav>'
+    + '<header class="arthead">'
+    +   '<div class="arthead__text">'
+    +     '<p class="eyebrow arthead__cat">'+cat.name+'</p>'
+    +     '<h1 class="arthead__title">'+a.title+'</h1>'
+    +     '<div class="arthead__meta">'
+    +       '<span class="artmeta__sub"><time datetime="'+a.date+'">'+fmtDate(a.date,'long')+'</time><span class="dotsep">·</span>읽는 데 '+a.reading+'분</span>'
+    +     '</div>'
+    +   '</div>'
+    +   '<figure class="artcover"><img src="'+coverOf(a)+'" alt="" loading="eager" width="1600" height="900"></figure>'
+    + '</header>'
+    + '<div class="artbody">'
+    +   toc
+    +   '<article class="post-article"><div class="prose" id="prose">'+built.html+'</div>'
+    +     '<div class="artfoot">'
+    +       '<div class="artfoot__tags">'+tags+'</div>'
+    +       faqHtml
+    +       '<a class="authorbox" href="author.html?id='+au.id+'" aria-label="'+au.name+' 프로필 보기">'+avatarHTML(au,56).replace('class="avatar"','class="avatar avatar--dark"')
+    +         '<div><div class="authorbox__name">'+au.name+'</div>'
+    +         '<p class="authorbox__bio">'+au.bio+'</p></div>'
+    +         '<span class="authorbox__go" aria-hidden="true">'+ICON.arrow+'</span>'
+    +       '</a>'
+    +       '<aside class="consult-note">'
+    +         '<div><div class="consult-note__t">떼인 돈, 포기하지 않아도 돼요.</div>'
+    +         '<div class="consult-note__d">공사대금, 보증금, 월세 등으로 받지 못한 돈이 있다면 FENCIL의 간편한 청구 절차로 법원에 청구해 보세요.</div></div>'
+    +         '<a class="consult-note__btn" href="https://fencil.app" target="_blank" rel="noopener">무료로 시작하기 '+ICON.arrow+'</a>'
+    +       '</aside>'
+    +     '</div>'
+    +   '</article>'
+    + '</div>'
+    + relHtml;
+
+  updateLD(a, built);
+  wireToc(built.headings);
+}
+
+/* scroll-spy for TOC */
+function wireToc(headings){
+  if (!headings.length) return;
+  var links = {};
+  document.querySelectorAll('#toc a').forEach(function(l){ links[l.getAttribute('href').slice(1)] = l; });
+  var secs = headings.map(function(h){ return document.getElementById(h.id); }).filter(Boolean);
+  function onScroll(){
+    var top = window.scrollY + parseInt(getComputedStyle(document.documentElement).getPropertyValue('--headerH')) + 60;
+    var cur = secs[0];
+    secs.forEach(function(s){ if (s.offsetTop <= top) cur = s; });
+    Object.values(links).forEach(function(l){ l.classList.remove('is-active'); });
+    if (cur && links[cur.id]) links[cur.id].classList.add('is-active');
+  }
+  window.addEventListener('scroll', onScroll, { passive:true });
+  onScroll();
+}
+
+/* JSON-LD BlogPosting + BreadcrumbList (SEO/AEO) */
+function updateLD(a, built){
+  var au = AUTHOR_OF(a), cat = CAT_OF(a);
+  var plain = built.html.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+  var data = {
+    "@context":"https://schema.org",
+    "@graph":[
+      {
+        "@type":"BlogPosting",
+        "headline": a.title,
+        "description": a.excerpt,
+        "articleSection": cat.name,
+        "keywords": a.tags.join(", "),
+        "datePublished": a.date,
+        "dateModified": a.date,
+        "inLanguage": "ko",
+        "wordCount": plain.length,
+        "author": { "@type":"Person", "name": au.name, "url": "https://fightingspirit.kr/authors/"+au.id, "worksFor": {"@type":"Organization","name":"AUCTORITAS LAB"} },
+        "publisher": { "@type":"Organization", "name":"AUCTORITAS LAB", "url":"https://fightingspirit.kr" },
+        "articleBody": plain
+      },
+      {
+        "@type":"BreadcrumbList",
+        "itemListElement":[
+          {"@type":"ListItem","position":1,"name":"홈","item":"https://fightingspirit.kr/journal/"},
+          {"@type":"ListItem","position":2,"name":cat.name,"item":"https://fightingspirit.kr/journal/articles?cat="+a.category},
+          {"@type":"ListItem","position":3,"name":a.title}
+        ]
+      }
+    ]
+  };
+  if (a.faq && a.faq.length){
+    data["@graph"].push({
+      "@type":"FAQPage",
+      "mainEntity": a.faq.map(function(item){
+        return { "@type":"Question", "name":item.q, "acceptedAnswer":{ "@type":"Answer", "text":item.a } };
+      })
+    });
+  }
+  document.getElementById('ld-article').textContent = JSON.stringify(data);
+}
+
+render();
+renderFooter();
+window.addEventListener('tweakchange', function(){ /* reading layout is CSS-driven */ });
+</script>
+<style>
+/* detail-local: restrained consultation note */
+.consult-note {
+  display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap;
+  padding: 26px 28px; margin-top: 32px; border-radius: var(--r-card);
+  background: var(--surface-2);
+}
+.consult-note__t { font-size: 16px; font-weight: 800; color: var(--ink); letter-spacing: -0.02em; }
+.consult-note__d { font-size: 14px; color: var(--fg-2); line-height: 1.55; margin-top: 6px; max-width: 46ch; }
+.consult-note__btn {
+  display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
+  font-size: 14px; font-weight: 700; color: #fff; background-color: #161616; text-decoration: none;
+  padding: 12px 20px; border-radius: var(--r-btn); transition: transform var(--d) var(--ease);
+}
+.consult-note__btn svg { width: 16px; height: 16px; }
+.consult-note__btn:hover { background: var(--accent); transform: translateY(-2px); }
+
+/* artfoot(태그·FAQ·작가·CTA)를 본문 .prose 와 동일한 너비로 맞춘다.
+   --measure(68ch)가 prose(18px)와 artfoot(16px)에서 다르게 계산되므로
+   폰트 비율(18/16)을 곱해 prose 폭(68ch@18px)에 정렬한다. */
+.artfoot { max-width: calc(var(--measure) * 18 / 16); }
+
+/* ============================================================
+   FAQ 섹션 — artfoot 내 태그와 작가 박스 사이.
+   새 값 없이 Atlas 토큰만 사용.
+   ============================================================ */
+.artfaq { max-width: calc(var(--measure) * 18 / 16); width: 100%; margin: 40px auto 0; border-top: 1px solid var(--line); padding-top: 40px; }
+.artfaq__eyebrow { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg-3); margin: 0 0 6px; }
+.artfaq__list { margin-top: 8px; }
+.faqq { border-top: 1px solid var(--line-2); }
+.faqq:first-child { border-top: none; }
+.faqq__q { display: grid; grid-template-columns: 22px 1fr auto; align-items: start; column-gap: 14px; padding: 22px 0; cursor: pointer; list-style: none; -webkit-tap-highlight-color: transparent; }
+.faqq__q::-webkit-details-marker { display: none; }
+.faqq__q:focus-visible { outline: none; }
+.faqq__q:focus-visible .faqq__qt { box-shadow: 0 2px 0 var(--accent-ring); }
+.faqq__mark { font-family: var(--font-serif); font-weight: 700; font-size: 18px; line-height: 1.5; color: var(--accent); text-align: left; user-select: none; }
+.faqq__mark--a { color: var(--fg-3); }
+.faqq__qt { font-size: 16.5px; font-weight: 700; line-height: 1.5; letter-spacing: -0.01em; color: var(--ink); word-break: keep-all; transition: color var(--d) var(--ease); }
+.faqq__q:hover .faqq__qt { color: var(--accent); }
+.faqq__chev { display: inline-flex; align-items: center; justify-content: center; color: var(--fg-3); padding-top: 3px; transition: color var(--d) var(--ease); }
+.faqq__chev svg { width: 20px; height: 20px; }
+.faqq__q:hover .faqq__chev { color: var(--ink); }
+.faqq[open] .faqq__chev { transform: rotate(180deg); color: var(--ink); }
+.faqq__a { display: grid; grid-template-columns: 22px 1fr; column-gap: 14px; padding: 0 0 26px; }
+.faqq__at { margin: 0; font-size: 15.5px; line-height: 1.72; color: var(--fg-2); letter-spacing: -0.003em; word-break: keep-all; text-wrap: pretty; }
+@media (prefers-reduced-motion: no-preference) { .faqq[open] .faqq__a { animation: faq-reveal var(--d) var(--ease); } }
+@keyframes faq-reveal { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.artfoot__tags:has(+ .artfaq) { border-bottom: none; padding-bottom: 0; }
+.artfaq + .authorbox { margin-top: 40px; padding-top: 40px; border-top: 1px solid var(--line); }
+@media (max-width: 480px) {
+  .artfaq { padding-top: 32px; margin-top: 32px; }
+  .faqq__q { grid-template-columns: 18px 1fr auto; column-gap: 11px; padding: 18px 0; }
+  .faqq__a { grid-template-columns: 18px 1fr; column-gap: 11px; padding-bottom: 22px; }
+  .faqq__mark { font-size: 16px; }
+  .faqq__qt { font-size: 16px; }
+  .faqq__at { font-size: 15px; }
+  .artfaq + .authorbox { margin-top: 32px; padding-top: 32px; }
+}
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="tweaks-journal.jsx"></script>
+</body>
+</html>
