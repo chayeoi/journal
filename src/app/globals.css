@@ -2,5 +2,5 @@
 /* vanilla-extract .css.ts 파일들은 각 컴포넌트가 담당 */
 
 :root {
-  --font-sans: "";
+  --font-sans: '';
 }

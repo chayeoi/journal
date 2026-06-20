@@ -85,7 +85,8 @@ const thumb = style({
       content: '""',
       position: 'absolute',
       inset: 0,
-      background: 'linear-gradient(0deg, rgba(8,8,10,.86) 0%, rgba(8,8,10,.32) 46%, rgba(8,8,10,.04) 72%)',
+      background:
+        'linear-gradient(0deg, rgba(8,8,10,.86) 0%, rgba(8,8,10,.32) 46%, rgba(8,8,10,.04) 72%)',
     },
     'html[data-card="minimal"] &': {
       flex: '0 0 42%',

@@ -40,7 +40,8 @@ const btn = style({
   textDecoration: 'none',
   padding: '12px 20px',
   borderRadius: 'var(--r-btn)',
-  transition: 'transform var(--d) var(--ease), background-color var(--d) var(--ease)',
+  transition:
+    'transform var(--d) var(--ease), background-color var(--d) var(--ease)',
   selectors: {
     '&:hover': {
       backgroundColor: 'var(--accent)',

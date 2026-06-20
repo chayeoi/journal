@@ -1,6 +1,6 @@
-import { cache } from "react";
-import { unstable_cache } from "next/cache";
-import { createStaticClient } from "@/lib/supabase/static";
+import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
+import { createStaticClient } from '@/lib/supabase/static';
 import type {
   Post,
   PostListItem,
@@ -9,31 +9,34 @@ import type {
   ArchiveDate,
   PostSearchParams,
   Profile,
-} from "@/types";
-import { CATEGORY_ORDER } from "@/types";
+} from '@/types';
+import { CATEGORY_ORDER } from '@/types';
 
 const PAGE_SIZE = 50;
 
 const POST_LIST_FIELDS =
-  "id, post_number, title, thumbnail_url, author_id, category, published_at, created_at, tags, excerpt, reading_minutes";
+  'id, post_number, title, thumbnail_url, author_id, category, published_at, created_at, tags, excerpt, reading_minutes';
 
 async function fetchAuthors(
   supabase: ReturnType<typeof createStaticClient>,
   authorIds: string[],
-): Promise<Map<string, Pick<Profile, "id" | "display_name" | "avatar_url">>> {
-  const map = new Map<string, Pick<Profile, "id" | "display_name" | "avatar_url">>();
+): Promise<Map<string, Pick<Profile, 'id' | 'display_name' | 'avatar_url'>>> {
+  const map = new Map<
+    string,
+    Pick<Profile, 'id' | 'display_name' | 'avatar_url'>
+  >();
   if (!authorIds.length) return map;
   const { data } = await supabase
-    .from("profiles")
-    .select("id, display_name, avatar_url")
-    .in("id", authorIds);
-  data?.forEach((p) => map.set(p.id, p));
+    .from('profiles')
+    .select('id, display_name, avatar_url')
+    .in('id', authorIds);
+  data?.forEach(p => map.set(p.id, p));
   return map;
 }
 
 function mapToListItem(
   p: Record<string, unknown>,
-  profilesMap: Map<string, Pick<Profile, "id" | "display_name" | "avatar_url">>,
+  profilesMap: Map<string, Pick<Profile, 'id' | 'display_name' | 'avatar_url'>>,
 ): PostListItem {
   const authorId = p.author_id as string | null;
   return {
@@ -65,24 +68,24 @@ const _cachedGetPosts = unstable_cache(
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let q: any = supabase
-      .from("posts")
-      .select(POST_LIST_FIELDS, { count: "exact" })
-      .eq("is_visible", true)
-      .order("published_at", { ascending: false, nullsFirst: false })
-      .order("created_at", { ascending: false });
+      .from('posts')
+      .select(POST_LIST_FIELDS, { count: 'exact' })
+      .eq('is_visible', true)
+      .order('published_at', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false });
 
-    if (category) q = q.eq("category", category);
-    if (tag) q = q.contains("tags", [tag]);
+    if (category) q = q.eq('category', category);
+    if (tag) q = q.contains('tags', [tag]);
     if (query) {
-      const esc = query.replace(/[%_\\]/g, "\\$&");
+      const esc = query.replace(/[%_\\]/g, '\\$&');
       q = q.or(`title.ilike.%${esc}%,excerpt.ilike.%${esc}%`);
     }
     if (archive) {
-      const [y, m] = archive.split("-");
-      const first = `${y}-${m.padStart(2, "0")}-01`;
+      const [y, m] = archive.split('-');
+      const first = `${y}-${m.padStart(2, '0')}-01`;
       const lastDate = new Date(parseInt(y), parseInt(m), 0);
-      const last = `${lastDate.getFullYear()}-${String(lastDate.getMonth() + 1).padStart(2, "0")}-${String(lastDate.getDate()).padStart(2, "0")}T23:59:59Z`;
-      q = q.gte("published_at", first).lte("published_at", last);
+      const last = `${lastDate.getFullYear()}-${String(lastDate.getMonth() + 1).padStart(2, '0')}-${String(lastDate.getDate()).padStart(2, '0')}T23:59:59Z`;
+      q = q.gte('published_at', first).lte('published_at', last);
     }
 
     // upToPage가 1보다 크면 1~upToPage 페이지 전체를 한 번에 가져옴 (뒤로 가기 상태 복원용)
@@ -94,20 +97,31 @@ const _cachedGetPosts = unstable_cache(
     if (error) throw error;
 
     const rows = (data ?? []) as Record<string, unknown>[];
-    const authorIds = [...new Set(rows.map((p) => p.author_id as string | null).filter(Boolean))] as string[];
+    const authorIds = [
+      ...new Set(rows.map(p => p.author_id as string | null).filter(Boolean)),
+    ] as string[];
     const profilesMap = await fetchAuthors(supabase, authorIds);
 
     const total = count ?? 0;
-    const posts = rows.map((p) => mapToListItem(p, profilesMap));
+    const posts = rows.map(p => mapToListItem(p, profilesMap));
 
     return { posts, total, hasMore: to + 1 < total };
   },
-  ["posts"],
+  ['posts'],
   { revalidate: 60 },
 );
 
-export async function getPosts(params: PostSearchParams = {}): Promise<PostsResult> {
-  const { query = "", category = "", tag = "", archive = "", page = 1, upToPage = 0 } = params;
+export async function getPosts(
+  params: PostSearchParams = {},
+): Promise<PostsResult> {
+  const {
+    query = '',
+    category = '',
+    tag = '',
+    archive = '',
+    page = 1,
+    upToPage = 0,
+  } = params;
   return _cachedGetPosts(category, tag, query, archive, page, upToPage);
 }
 
@@ -115,26 +129,26 @@ export const getCategoryCounts = unstable_cache(
   async (): Promise<CategoryCount[]> => {
     const supabase = createStaticClient();
     const { data, error } = await supabase
-      .from("posts")
-      .select("category")
-      .eq("is_visible", true);
+      .from('posts')
+      .select('category')
+      .eq('is_visible', true);
 
     if (error) return [];
 
     const counts = new Map<string, number>();
     let total = 0;
-    (data ?? []).forEach((p) => {
+    (data ?? []).forEach(p => {
       total++;
       if (p.category) counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
     });
 
-    const byCategory: CategoryCount[] = CATEGORY_ORDER
-      .filter((c) => counts.has(c))
-      .map((c) => ({ category: c, count: counts.get(c)! }));
+    const byCategory: CategoryCount[] = CATEGORY_ORDER.filter(c =>
+      counts.has(c),
+    ).map(c => ({ category: c, count: counts.get(c)! }));
 
-    return [{ category: "all", count: total }, ...byCategory];
+    return [{ category: 'all', count: total }, ...byCategory];
   },
-  ["category-counts"],
+  ['category-counts'],
   { revalidate: 300 },
 );
 
@@ -142,15 +156,15 @@ export const getArchiveDates = unstable_cache(
   async (): Promise<ArchiveDate[]> => {
     const supabase = createStaticClient();
     const { data, error } = await supabase
-      .from("posts")
-      .select("published_at")
-      .eq("is_visible", true)
-      .not("published_at", "is", null);
+      .from('posts')
+      .select('published_at')
+      .eq('is_visible', true)
+      .not('published_at', 'is', null);
 
     if (error) return [];
 
     const counts = new Map<string, number>();
-    (data ?? []).forEach((p) => {
+    (data ?? []).forEach(p => {
       if (p.published_at) {
         const key = p.published_at.slice(0, 7);
         counts.set(key, (counts.get(key) ?? 0) + 1);
@@ -160,11 +174,11 @@ export const getArchiveDates = unstable_cache(
     return Array.from(counts.entries())
       .sort(([a], [b]) => b.localeCompare(a))
       .map(([key, count]) => {
-        const [y, mo] = key.split("-");
+        const [y, mo] = key.split('-');
         return { key, label: `${y}년 ${parseInt(mo)}월`, count };
       });
   },
-  ["archive-dates"],
+  ['archive-dates'],
   { revalidate: 300 },
 );
 
@@ -172,22 +186,24 @@ export const getFeaturedPosts = unstable_cache(
   async (): Promise<PostListItem[]> => {
     const supabase = createStaticClient();
     const { data, error } = await supabase
-      .from("posts")
+      .from('posts')
       .select(POST_LIST_FIELDS)
-      .eq("is_visible", true)
-      .order("published_at", { ascending: false, nullsFirst: false })
-      .order("created_at", { ascending: false })
+      .eq('is_visible', true)
+      .order('published_at', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false })
       .limit(5);
 
     if (error) return [];
 
     const rows = (data ?? []) as Record<string, unknown>[];
-    const authorIds = [...new Set(rows.map((p) => p.author_id as string | null).filter(Boolean))] as string[];
+    const authorIds = [
+      ...new Set(rows.map(p => p.author_id as string | null).filter(Boolean)),
+    ] as string[];
     const profilesMap = await fetchAuthors(supabase, authorIds);
 
-    return rows.map((p) => mapToListItem(p, profilesMap));
+    return rows.map(p => mapToListItem(p, profilesMap));
   },
-  ["featured-posts"],
+  ['featured-posts'],
   { revalidate: 60 },
 );
 
@@ -201,19 +217,19 @@ export async function getRelatedPosts(
   const supabase = createStaticClient();
 
   const orParts: string[] = [];
-  if (tags.length > 0) orParts.push(`tags.ov.{${tags.join(",")}}`);
+  if (tags.length > 0) orParts.push(`tags.ov.{${tags.join(',')}}`);
   if (category) orParts.push(`category.eq.${category}`);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let q: any = supabase
-    .from("posts")
+    .from('posts')
     .select(POST_LIST_FIELDS)
-    .eq("is_visible", true)
-    .neq("id", postId)
-    .order("published_at", { ascending: false, nullsFirst: false })
+    .eq('is_visible', true)
+    .neq('id', postId)
+    .order('published_at', { ascending: false, nullsFirst: false })
     .limit(20);
 
-  if (orParts.length > 0) q = q.or(orParts.join(","));
+  if (orParts.length > 0) q = q.or(orParts.join(','));
 
   const { data, error } = await q;
   if (error || !data?.length) return [];
@@ -221,30 +237,35 @@ export async function getRelatedPosts(
   const rows = (data ?? []) as Record<string, unknown>[];
   const currentTagSet = new Set(tags);
 
-  const scored = rows.map((p) => {
+  const scored = rows.map(p => {
     let score = 0;
     if (authorId && p.author_id === authorId) score += 1;
     if (category && p.category === category) score += 2;
-    score += ((p.tags as string[]) ?? []).filter((t) => currentTagSet.has(t)).length * 2;
+    score +=
+      ((p.tags as string[]) ?? []).filter(t => currentTagSet.has(t)).length * 2;
     return { p, score };
   });
   scored.sort((a, b) => b.score - a.score);
 
-  const top = scored.slice(0, limit).map((x) => x.p);
-  const authorIds = [...new Set(top.map((p) => p.author_id as string | null).filter(Boolean))] as string[];
+  const top = scored.slice(0, limit).map(x => x.p);
+  const authorIds = [
+    ...new Set(top.map(p => p.author_id as string | null).filter(Boolean)),
+  ] as string[];
   const profilesMap = await fetchAuthors(supabase, authorIds);
 
-  return top.map((p) => mapToListItem(p, profilesMap));
+  return top.map(p => mapToListItem(p, profilesMap));
 }
 
-export const getPostByNumber = cache(async function getPostByNumber(postNumber: number): Promise<Post | null> {
+export const getPostByNumber = cache(async function getPostByNumber(
+  postNumber: number,
+): Promise<Post | null> {
   const supabase = createStaticClient();
 
   const { data, error } = await supabase
-    .from("posts")
-    .select("*")
-    .eq("post_number", postNumber)
-    .eq("is_visible", true)
+    .from('posts')
+    .select('*')
+    .eq('post_number', postNumber)
+    .eq('is_visible', true)
     .single();
 
   if (error || !data) return null;
@@ -252,9 +273,9 @@ export const getPostByNumber = cache(async function getPostByNumber(postNumber: 
   let author: Profile | undefined;
   if (data.author_id) {
     const { data: profile } = await supabase
-      .from("profiles")
-      .select("id, display_name, bio, avatar_url")
-      .eq("id", data.author_id)
+      .from('profiles')
+      .select('id, display_name, bio, avatar_url')
+      .eq('id', data.author_id)
       .single();
     if (profile) author = profile as Profile;
   }
@@ -265,21 +286,26 @@ export const getPostByNumber = cache(async function getPostByNumber(postNumber: 
 export async function getAllPostNumbers(): Promise<number[]> {
   const supabase = createStaticClient();
   const { data, error } = await supabase
-    .from("posts")
-    .select("post_number")
-    .eq("is_visible", true);
+    .from('posts')
+    .select('post_number')
+    .eq('is_visible', true);
 
   if (error) return [];
-  return (data ?? []).map((p) => p.post_number);
+  return (data ?? []).map(p => p.post_number);
 }
 
-export async function getAllPostSlugs(): Promise<{ post_number: number; updated_at: string }[]> {
+export async function getAllPostSlugs(): Promise<
+  { post_number: number; updated_at: string }[]
+> {
   const supabase = createStaticClient();
   const { data, error } = await supabase
-    .from("posts")
-    .select("post_number, updated_at")
-    .eq("is_visible", true);
+    .from('posts')
+    .select('post_number, updated_at')
+    .eq('is_visible', true);
 
   if (error) return [];
-  return (data ?? []).map((p) => ({ post_number: p.post_number, updated_at: p.updated_at }));
+  return (data ?? []).map(p => ({
+    post_number: p.post_number,
+    updated_at: p.updated_at,
+  }));
 }

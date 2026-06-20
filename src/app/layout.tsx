@@ -1,10 +1,10 @@
 // src/app/layout.tsx
-import type { Metadata } from "next";
-import { GoogleAnalytics } from "@next/third-parties/google";
-import { defaultMetadata } from "@/lib/metadata";
-import "@/styles/ds-system.css";
-import "@/styles/journal.css";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { GoogleAnalytics } from '@next/third-parties/google';
+import { defaultMetadata } from '@/lib/metadata';
+import '@/styles/ds-system.css';
+import '@/styles/journal.css';
+import './globals.css';
 
 // FOUC 방지: localStorage 트윅을 첫 페인트 전에 html 속성으로 적용
 const FOUC_SCRIPT = `(function(){try{
@@ -23,7 +23,11 @@ const FOUC_SCRIPT = `(function(){try{
 
 export const metadata: Metadata = defaultMetadata;
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html
       lang="ko"
