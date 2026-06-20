@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import type { PostListItem, CategoryCount, ArchiveDate } from "@/types";
-import { ICON } from "@/utils/icons";
-import PostCard from "@/components/PostCard";
-import styles from "./styles.css";
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import type { PostListItem, CategoryCount, ArchiveDate } from '@/types';
+import { ICON } from '@/utils/icons';
+import PostCard from '@/components/PostCard';
+import styles from './styles.css';
 
 interface Filters {
   cat: string;
@@ -42,33 +42,38 @@ function ArticleList({
   const [page, setPage] = useState(initialPage);
   const [localQ, setLocalQ] = useState(filters.q);
   const [fmoreOpen, setFmoreOpen] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
 
+  // URL이 바뀌면 서버에서 새 데이터를 받아 state를 동기화 (의도적 파생 state 패턴)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPosts(initialPosts);
     setHasMore(initialHasMore);
     setPage(initialPage);
   }, [initialPosts, initialHasMore, initialPage]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalQ(filters.q);
   }, [filters.q]);
 
   useEffect(() => {
-    if (fmoreOpen) document.documentElement.setAttribute("data-fmore", "open");
-    else document.documentElement.removeAttribute("data-fmore");
+    if (fmoreOpen) document.documentElement.setAttribute('data-fmore', 'open');
+    else document.documentElement.removeAttribute('data-fmore');
   }, [fmoreOpen]);
 
   useEffect(() => {
-    const el = document.getElementById("ld-list");
+    const el = document.getElementById('ld-list');
     if (!el) return;
     el.textContent = JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "ItemList",
-      name: "AUCTORITAS LAB 아티클",
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      name: 'AUCTORITAS LAB 아티클',
       numberOfItems: total,
       itemListElement: posts.slice(0, 20).map((p, i) => ({
-        "@type": "ListItem",
+        '@type': 'ListItem',
         position: i + 1,
         url: `${window.location.origin}/posts/${p.post_number}`,
         name: p.title,
@@ -80,12 +85,12 @@ function ArticleList({
     (patch: Partial<Filters>) => {
       const merged = { ...filters, ...patch };
       const params = new URLSearchParams();
-      if (merged.cat) params.set("cat", merged.cat);
-      if (merged.tag) params.set("tag", merged.tag);
-      if (merged.q) params.set("q", merged.q);
-      if (merged.archive) params.set("archive", merged.archive);
+      if (merged.cat) params.set('cat', merged.cat);
+      if (merged.tag) params.set('tag', merged.tag);
+      if (merged.q) params.set('q', merged.q);
+      if (merged.archive) params.set('archive', merged.archive);
       const qs = params.toString();
-      return qs ? `/?${qs}` : "/";
+      return qs ? `/?${qs}` : '/';
     },
     [filters],
   );
@@ -107,15 +112,15 @@ function ArticleList({
     setLoadingMore(true);
     const nextPage = page + 1;
     const params = new URLSearchParams();
-    if (filters.cat) params.set("cat", filters.cat);
-    if (filters.tag) params.set("tag", filters.tag);
-    if (filters.q) params.set("q", filters.q);
-    if (filters.archive) params.set("archive", filters.archive);
-    params.set("page", String(nextPage));
+    if (filters.cat) params.set('cat', filters.cat);
+    if (filters.tag) params.set('tag', filters.tag);
+    if (filters.q) params.set('q', filters.q);
+    if (filters.archive) params.set('archive', filters.archive);
+    params.set('page', String(nextPage));
     try {
       const res = await fetch(`/api/posts?${params}`);
       const data = await res.json();
-      setPosts((prev) => [...prev, ...data.posts]);
+      setPosts(prev => [...prev, ...data.posts]);
       setHasMore(data.hasMore);
       setPage(nextPage);
       // URL에 page 파라미터 저장 — 뒤로 가기 후 돌아왔을 때 상태 복원에 사용됨
@@ -129,7 +134,9 @@ function ArticleList({
 
   const allTags = useMemo(() => {
     const m = new Map<string, number>();
-    posts.forEach((p) => (p.tags ?? []).forEach((t) => m.set(t, (m.get(t) ?? 0) + 1)));
+    posts.forEach(p =>
+      (p.tags ?? []).forEach(t => m.set(t, (m.get(t) ?? 0) + 1)),
+    );
     return Array.from(m.entries())
       .sort(([, a], [, b]) => b - a)
       .map(([tag]) => tag);
@@ -137,26 +144,30 @@ function ArticleList({
 
   const activeChips = useMemo<ActiveChip[]>(() => {
     const chips: ActiveChip[] = [];
-    if (filters.cat) chips.push({ type: "cat", label: filters.cat });
+    if (filters.cat) chips.push({ type: 'cat', label: filters.cat });
     if (filters.archive) {
-      const arc = archiveDates.find((a) => a.key === filters.archive);
-      if (arc) chips.push({ type: "archive", label: arc.label });
+      const arc = archiveDates.find(a => a.key === filters.archive);
+      if (arc) chips.push({ type: 'archive', label: arc.label });
     }
-    if (filters.tag) chips.push({ type: "tag", val: filters.tag, label: `#${filters.tag}` });
-    if (filters.q.trim()) chips.push({ type: "q", label: `"${filters.q.trim()}"` });
+    if (filters.tag)
+      chips.push({ type: 'tag', val: filters.tag, label: `#${filters.tag}` });
+    if (filters.q.trim())
+      chips.push({ type: 'q', label: `"${filters.q.trim()}"` });
     return chips;
   }, [filters, archiveDates]);
 
   function clearChip(type: string, val?: string) {
-    if (type === "cat") navigate({ cat: "" });
-    else if (type === "archive") navigate({ archive: "" });
-    else if (type === "q") { setLocalQ(""); navigate({ q: "" }); }
-    else if (type === "tag" && val) navigate({ tag: "" });
+    if (type === 'cat') navigate({ cat: '' });
+    else if (type === 'archive') navigate({ archive: '' });
+    else if (type === 'q') {
+      setLocalQ('');
+      navigate({ q: '' });
+    } else if (type === 'tag' && val) navigate({ tag: '' });
   }
 
   function clearAll() {
-    setLocalQ("");
-    navigate({ cat: "", tag: "", q: "", archive: "" });
+    setLocalQ('');
+    navigate({ cat: '', tag: '', q: '', archive: '' });
   }
 
   return (
@@ -171,7 +182,7 @@ function ArticleList({
               placeholder="키워드로 검색 (예: 유치권, 권리금)"
               value={localQ}
               aria-label="키워드 검색"
-              onChange={(e) => handleQChange(e.target.value)}
+              onChange={e => handleQChange(e.target.value)}
             />
           </div>
 
@@ -180,11 +191,13 @@ function ArticleList({
               id="bar-archive"
               aria-label="기간"
               value={filters.archive}
-              onChange={(e) => navigate({ archive: e.target.value })}
+              onChange={e => navigate({ archive: e.target.value })}
             >
               <option value="">전체 기간</option>
-              {archiveDates.map((a) => (
-                <option key={a.key} value={a.key}>{a.label}</option>
+              {archiveDates.map(a => (
+                <option key={a.key} value={a.key}>
+                  {a.label}
+                </option>
               ))}
             </select>
           </div>
@@ -192,19 +205,21 @@ function ArticleList({
           <div className="fgroup fgroup--cat">
             <div className={styles.fgroupLabel}>카테고리</div>
             <div className={styles.fcat}>
-              {categoryCounts.map((c) => (
+              {categoryCounts.map(c => (
                 <button
                   key={c.category}
                   className={styles.fcatBtn}
                   data-cat={c.category}
                   aria-pressed={
-                    c.category === "all" ? !filters.cat : filters.cat === c.category
+                    c.category === 'all'
+                      ? !filters.cat
+                      : filters.cat === c.category
                   }
                   onClick={() =>
-                    navigate({ cat: c.category === "all" ? "" : c.category })
+                    navigate({ cat: c.category === 'all' ? '' : c.category })
                   }
                 >
-                  {c.category === "all" ? "전체" : c.category}
+                  {c.category === 'all' ? '전체' : c.category}
                   <span className={styles.fcatCount}>{c.count}</span>
                 </button>
               ))}
@@ -217,7 +232,7 @@ function ArticleList({
             id="fmoreToggle"
             aria-expanded={fmoreOpen}
             aria-controls="fmore"
-            onClick={() => setFmoreOpen((v) => !v)}
+            onClick={() => setFmoreOpen(v => !v)}
           >
             <span>태그 · 아카이브</span>
             <span dangerouslySetInnerHTML={{ __html: ICON.chevron }} />
@@ -228,13 +243,15 @@ function ArticleList({
               <div className="fgroup fgroup--tags">
                 <div className={styles.fgroupLabel}>태그</div>
                 <div className={styles.fchips}>
-                  {allTags.map((t) => (
+                  {allTags.map(t => (
                     <button
                       key={t}
                       className={styles.fchip}
                       data-tag={t}
                       aria-pressed={filters.tag === t}
-                      onClick={() => navigate({ tag: filters.tag === t ? "" : t })}
+                      onClick={() =>
+                        navigate({ tag: filters.tag === t ? '' : t })
+                      }
                     >
                       {t}
                     </button>
@@ -247,14 +264,16 @@ function ArticleList({
               <div className="fgroup fgroup--archive">
                 <div className={styles.fgroupLabel}>아카이브</div>
                 <div className={styles.farchive}>
-                  {archiveDates.map((a) => (
+                  {archiveDates.map(a => (
                     <button
                       key={a.key}
                       className={styles.farchiveBtn}
                       data-archive={a.key}
                       aria-pressed={filters.archive === a.key}
                       onClick={() =>
-                        navigate({ archive: filters.archive === a.key ? "" : a.key })
+                        navigate({
+                          archive: filters.archive === a.key ? '' : a.key,
+                        })
                       }
                     >
                       {a.label}
@@ -281,7 +300,13 @@ function ArticleList({
                     onClick={() => clearChip(c.type, c.val)}
                   >
                     {c.label}
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2.4}
+                      strokeLinecap="round"
+                    >
                       <path d="M6 6l12 12M18 6 6 18" />
                     </svg>
                   </button>
@@ -296,7 +321,7 @@ function ArticleList({
           {posts.length > 0 ? (
             <>
               <div className={styles.cardgrid}>
-                {posts.map((post) => (
+                {posts.map(post => (
                   <PostCard key={post.id} post={post} />
                 ))}
               </div>
@@ -310,9 +335,16 @@ function ArticleList({
                     disabled={loadingMore}
                     aria-label="아티클 더 보기"
                   >
-                    <span>{loadingMore ? "불러오는 중…" : "더 보기"}</span>
+                    <span>{loadingMore ? '불러오는 중…' : '더 보기'}</span>
                     <span className={styles.loadmoreIcon}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2.2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
                         <path d="M6 9l6 6 6-6" />
                       </svg>
                     </span>
