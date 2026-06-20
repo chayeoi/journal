@@ -1,16 +1,21 @@
-import { cache } from "react";
-import { unstable_cache } from "next/cache";
-import { createStaticClient } from "@/lib/supabase/static";
-import type { AuthorListItem, AuthorDetail, PostListItem, Profile } from "@/types";
+import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
+import { createStaticClient } from '@/lib/supabase/static';
+import type {
+  AuthorListItem,
+  AuthorDetail,
+  PostListItem,
+  Profile,
+} from '@/types';
 
 const POST_LIST_FIELDS =
-  "id, post_number, title, thumbnail_url, author_id, category, published_at, created_at, tags, excerpt, reading_minutes";
+  'id, post_number, title, thumbnail_url, author_id, category, published_at, created_at, tags, excerpt, reading_minutes';
 
-const AUTHOR_PROFILE_FIELDS = "id, display_name, bio, avatar_url";
+const AUTHOR_PROFILE_FIELDS = 'id, display_name, bio, avatar_url';
 
 function mapToListItem(
   p: Record<string, unknown>,
-  author?: Pick<Profile, "id" | "display_name" | "avatar_url">,
+  author?: Pick<Profile, 'id' | 'display_name' | 'avatar_url'>,
 ): PostListItem {
   return {
     id: p.id as string,
@@ -37,10 +42,10 @@ export const getAuthors = unstable_cache(
     const supabase = createStaticClient();
 
     const { data: posts, error } = await supabase
-      .from("posts")
-      .select("author_id")
-      .eq("is_visible", true)
-      .not("author_id", "is", null);
+      .from('posts')
+      .select('author_id')
+      .eq('is_visible', true)
+      .not('author_id', 'is', null);
 
     if (error || !posts?.length) return [];
 
@@ -54,11 +59,11 @@ export const getAuthors = unstable_cache(
     if (!authorIds.length) return [];
 
     const { data: profiles } = await supabase
-      .from("profiles")
+      .from('profiles')
       .select(AUTHOR_PROFILE_FIELDS)
-      .in("id", authorIds);
+      .in('id', authorIds);
 
-    const list: AuthorListItem[] = (profiles ?? []).map((p) => ({
+    const list: AuthorListItem[] = (profiles ?? []).map(p => ({
       id: p.id as string,
       display_name: p.display_name as string,
       bio: (p.bio as string | null) ?? null,
@@ -68,12 +73,12 @@ export const getAuthors = unstable_cache(
     list.sort((a, b) => {
       const c = (countByAuthor.get(b.id) ?? 0) - (countByAuthor.get(a.id) ?? 0);
       if (c) return c;
-      return a.display_name.localeCompare(b.display_name, "ko");
+      return a.display_name.localeCompare(b.display_name, 'ko');
     });
 
     return list;
   },
-  ["authors"],
+  ['authors'],
   { revalidate: 300 },
 );
 
@@ -84,20 +89,20 @@ export const getAuthorById = cache(async function getAuthorById(
   const supabase = createStaticClient();
 
   const { data: profile, error } = await supabase
-    .from("profiles")
+    .from('profiles')
     .select(AUTHOR_PROFILE_FIELDS)
-    .eq("id", id)
+    .eq('id', id)
     .single();
 
   if (error || !profile) return null;
 
   const { data: rows } = await supabase
-    .from("posts")
+    .from('posts')
     .select(POST_LIST_FIELDS)
-    .eq("is_visible", true)
-    .eq("author_id", id)
-    .order("published_at", { ascending: false, nullsFirst: false })
-    .order("created_at", { ascending: false });
+    .eq('is_visible', true)
+    .eq('author_id', id)
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false });
 
   const authorMini = {
     id: profile.id as string,
@@ -105,7 +110,7 @@ export const getAuthorById = cache(async function getAuthorById(
     avatar_url: (profile.avatar_url as string | null) ?? null,
   };
 
-  const posts: PostListItem[] = (rows ?? []).map((p) =>
+  const posts: PostListItem[] = (rows ?? []).map(p =>
     mapToListItem(p as Record<string, unknown>, authorMini),
   );
 
@@ -123,11 +128,11 @@ export const getAuthorById = cache(async function getAuthorById(
 export async function getAllAuthorIds(): Promise<string[]> {
   const supabase = createStaticClient();
   const { data, error } = await supabase
-    .from("posts")
-    .select("author_id")
-    .eq("is_visible", true)
-    .not("author_id", "is", null);
+    .from('posts')
+    .select('author_id')
+    .eq('is_visible', true)
+    .not('author_id', 'is', null);
 
   if (error) return [];
-  return [...new Set((data ?? []).map((p) => p.author_id as string))];
+  return [...new Set((data ?? []).map(p => p.author_id as string))];
 }

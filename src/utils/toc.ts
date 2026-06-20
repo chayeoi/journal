@@ -7,7 +7,7 @@ export function extractHeadings(html: string): Heading[] {
   const re = /<h2[^>]*>([\s\S]*?)<\/h2>/gi;
   let m: RegExpExecArray | null;
   while ((m = re.exec(html)) !== null) {
-    const text = m[1].replace(/<[^>]+>/g, "").trim();
+    const text = m[1].replace(/<[^>]+>/g, '').trim();
     headings.push({ id: `sec-${i + 1}`, text });
     i++;
   }

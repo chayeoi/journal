@@ -149,6 +149,18 @@ const segBtn = style({
   lineHeight: 1.2,
 });
 
-const styles = { panel, header, closeBtn, body, row, label, sect, field, seg, segThumb, segBtn };
+const styles = {
+  panel,
+  header,
+  closeBtn,
+  body,
+  row,
+  label,
+  sect,
+  field,
+  seg,
+  segThumb,
+  segBtn,
+};
 
 export default styles;

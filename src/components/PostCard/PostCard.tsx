@@ -1,8 +1,8 @@
-import Image from "next/image";
-import Link from "next/link";
-import type { PostListItem } from "@/types";
-import { fmtDate } from "@/utils/format";
-import styles from "./styles.css";
+import Image from 'next/image';
+import Link from 'next/link';
+import type { PostListItem } from '@/types';
+import { fmtDate } from '@/utils/format';
+import styles from './styles.css';
 
 interface Props {
   post: PostListItem;
@@ -12,11 +12,15 @@ interface Props {
 function PostCard({ post, showReadingTime = true }: Props) {
   const tags = (post.tags ?? []).slice(0, 3);
   const readingTime = post.reading_minutes ?? 1;
-  const dateStr = post.published_at ? fmtDate(post.published_at, "short") : "";
+  const dateStr = post.published_at ? fmtDate(post.published_at, 'short') : '';
 
   return (
-    <article className={styles.root} data-cat={post.category ?? ""}>
-      <Link className={styles.link} href={`/posts/${post.post_number}`} aria-label={post.title}>
+    <article className={styles.root} data-cat={post.category ?? ''}>
+      <Link
+        className={styles.link}
+        href={`/posts/${post.post_number}`}
+        aria-label={post.title}
+      >
         <span className={styles.thumb}>
           {post.thumbnail_url ? (
             <Image
@@ -24,13 +28,21 @@ function PostCard({ post, showReadingTime = true }: Props) {
               alt=""
               fill
               sizes="(max-width: 480px) calc(100vw - 40px), (max-width: 720px) calc(50vw - 36px), 380px"
-              style={{ objectFit: "cover" }}
+              style={{ objectFit: 'cover' }}
             />
           ) : (
-            <div style={{ width: "100%", height: "100%", background: "var(--surface-2)" }} />
+            <div
+              style={{
+                width: '100%',
+                height: '100%',
+                background: 'var(--surface-2)',
+              }}
+            />
           )}
           {post.category && (
-            <span className={`eyebrow ${styles.thumbCat}`}>{post.category}</span>
+            <span className={`eyebrow ${styles.thumbCat}`}>
+              {post.category}
+            </span>
           )}
         </span>
         <span className={styles.body}>
@@ -38,12 +50,12 @@ function PostCard({ post, showReadingTime = true }: Props) {
             <span className={`eyebrow ${styles.kicker}`}>{post.category}</span>
           )}
           <h3 className={styles.title}>{post.title}</h3>
-          {post.excerpt && (
-            <p className={styles.excerpt}>{post.excerpt}</p>
-          )}
+          {post.excerpt && <p className={styles.excerpt}>{post.excerpt}</p>}
           <span className={styles.tags}>
-            {tags.map((t) => (
-              <span key={t} className="ptag">{t}</span>
+            {tags.map(t => (
+              <span key={t} className="ptag">
+                {t}
+              </span>
             ))}
           </span>
           <span className={styles.foot}>
@@ -60,19 +72,23 @@ function PostCard({ post, showReadingTime = true }: Props) {
                 className={`avatar avatar--accent ${styles.avatarInitial}`}
                 aria-hidden="true"
               >
-                {(post.author?.display_name ?? "A").charAt(0)}
+                {(post.author?.display_name ?? 'A').charAt(0)}
               </span>
             )}
             <span className={styles.who}>
               <span className={styles.by}>
-                {post.author?.display_name ?? "AUCTORITAS"}
+                {post.author?.display_name ?? 'AUCTORITAS'}
               </span>
             </span>
             <span className={styles.metaline}>
-              {dateStr && <time dateTime={post.published_at ?? ""}>{dateStr}</time>}
+              {dateStr && (
+                <time dateTime={post.published_at ?? ''}>{dateStr}</time>
+              )}
               {showReadingTime && (
                 <>
-                  <span className="dotsep" aria-hidden="true">·</span>
+                  <span className="dotsep" aria-hidden="true">
+                    ·
+                  </span>
                   {readingTime}분
                 </>
               )}

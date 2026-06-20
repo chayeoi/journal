@@ -50,7 +50,8 @@ globalStyle(`${fsearch} input`, {
   background: 'var(--surface)',
   border: '1.5px solid var(--n-04)',
   borderRadius: 'var(--r-input)',
-  transition: 'border-color var(--d) var(--ease), box-shadow var(--d) var(--ease)',
+  transition:
+    'border-color var(--d) var(--ease), box-shadow var(--d) var(--ease)',
 });
 
 globalStyle(`${fsearch} input:focus`, {
@@ -280,7 +281,8 @@ const fmore = style({
       opacity: 0,
       pointerEvents: 'none',
       marginTop: -18,
-      transition: 'max-height var(--d) var(--ease), opacity var(--d) var(--ease), margin var(--d) var(--ease)',
+      transition:
+        'max-height var(--d) var(--ease), opacity var(--d) var(--ease), margin var(--d) var(--ease)',
     },
   },
 });
@@ -309,9 +311,10 @@ const fchips = style({
       scrollbarWidth: 'thin',
       scrollbarColor: 'var(--n-04) transparent',
     },
-    'html[data-tagstyle="hash"] &, html[data-tagstyle="underline"] &, html[data-tagstyle="bracket"] &': {
-      gap: '5px 7px',
-    },
+    'html[data-tagstyle="hash"] &, html[data-tagstyle="underline"] &, html[data-tagstyle="bracket"] &':
+      {
+        gap: '5px 7px',
+      },
   },
 });
 
@@ -411,10 +414,13 @@ globalStyle(`html[data-tagstyle="hash"] .${fchip}::before`, {
   fontWeight: 700,
 });
 
-globalStyle(`html[data-tagstyle="hash"] .${fchip}[aria-pressed="true"]::before`, {
-  opacity: 1,
-  color: 'var(--accent)',
-});
+globalStyle(
+  `html[data-tagstyle="hash"] .${fchip}[aria-pressed="true"]::before`,
+  {
+    opacity: 1,
+    color: 'var(--accent)',
+  },
+);
 
 globalStyle(`html[data-tagstyle="bracket"] .${fchip}::before`, {
   content: '"["',
@@ -428,11 +434,14 @@ globalStyle(`html[data-tagstyle="bracket"] .${fchip}::after`, {
   marginLeft: 2,
 });
 
-globalStyle(`html[data-tagstyle="bracket"] .${fchip}[aria-pressed="true"]::before,
-             html[data-tagstyle="bracket"] .${fchip}[aria-pressed="true"]::after`, {
-  opacity: 0.9,
-  color: 'var(--accent)',
-});
+globalStyle(
+  `html[data-tagstyle="bracket"] .${fchip}[aria-pressed="true"]::before,
+             html[data-tagstyle="bracket"] .${fchip}[aria-pressed="true"]::after`,
+  {
+    opacity: 0.9,
+    color: 'var(--accent)',
+  },
+);
 
 /* ── 아카이브 ── */
 const farchive = style({
@@ -606,14 +615,15 @@ const cardgrid = style({
       gridTemplateColumns: '1fr !important',
       gap: '0',
     },
-    'html[data-thumb="off"][data-card="stacked"] &, html[data-thumb="off"][data-card="minimal"] &': {
-      gridTemplateColumns: 'repeat(3, 1fr)',
-      gap: '0 1px',
-      background: 'var(--line)',
-      border: '1px solid var(--line)',
-      borderRadius: 'var(--r-card)',
-      overflow: 'hidden',
-    },
+    'html[data-thumb="off"][data-card="stacked"] &, html[data-thumb="off"][data-card="minimal"] &':
+      {
+        gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: '0 1px',
+        background: 'var(--line)',
+        border: '1px solid var(--line)',
+        borderRadius: 'var(--r-card)',
+        overflow: 'hidden',
+      },
     'html[data-thumb="off"][data-card="stacked"][data-cols="2"] &': {
       gridTemplateColumns: 'repeat(2, 1fr)',
     },
@@ -642,17 +652,20 @@ globalStyle(`html[data-card="minimal"] .${cardgrid}`, {
   },
 });
 
-globalStyle(`html[data-thumb="off"][data-card="stacked"] .${cardgrid},
-             html[data-thumb="off"][data-card="minimal"] .${cardgrid}`, {
-  '@media': {
-    '(max-width: 980px)': {
-      gridTemplateColumns: 'repeat(2, 1fr) !important',
-    },
-    '(max-width: 620px)': {
-      gridTemplateColumns: '1fr !important',
+globalStyle(
+  `html[data-thumb="off"][data-card="stacked"] .${cardgrid},
+             html[data-thumb="off"][data-card="minimal"] .${cardgrid}`,
+  {
+    '@media': {
+      '(max-width: 980px)': {
+        gridTemplateColumns: 'repeat(2, 1fr) !important',
+      },
+      '(max-width: 620px)': {
+        gridTemplateColumns: '1fr !important',
+      },
     },
   },
-});
+);
 
 globalStyle(`html[data-thumb="off"][data-card="overlay"] .${cardgrid}`, {
   '@media': {
@@ -708,7 +721,8 @@ const loadmoreIcon = style({
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
-  transition: 'border-color var(--d) var(--ease), background var(--d) var(--ease)',
+  transition:
+    'border-color var(--d) var(--ease), background var(--d) var(--ease)',
 });
 globalStyle(`html[data-shape="sharp"] ${loadmoreIcon}`, { borderRadius: 5 });
 globalStyle(`${loadmoreIcon} svg`, {

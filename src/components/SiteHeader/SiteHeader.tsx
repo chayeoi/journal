@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect, useRef } from "react";
-import Link from "next/link";
-import styles from "./styles.css";
+import { useEffect, useRef } from 'react';
+import Link from 'next/link';
+import styles from './styles.css';
 
 function SiteHeader() {
   const ref = useRef<HTMLElement>(null);
@@ -17,8 +17,8 @@ function SiteHeader() {
       const y = window.scrollY;
       const delta = y - lastY;
       if (Math.abs(delta) > 6) {
-        if (delta > 0 && y > 80) header!.setAttribute("data-hidden", "true");
-        else header!.removeAttribute("data-hidden");
+        if (delta > 0 && y > 80) header!.setAttribute('data-hidden', 'true');
+        else header!.removeAttribute('data-hidden');
         lastY = y;
       }
       ticking = false;
@@ -31,8 +31,8 @@ function SiteHeader() {
       }
     }
 
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   return (

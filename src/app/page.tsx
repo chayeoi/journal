@@ -1,20 +1,25 @@
-import { Suspense } from "react";
-import { getPosts, getCategoryCounts, getArchiveDates, getFeaturedPosts } from "@/lib/posts";
-import { buildSiteJsonLd } from "@/lib/metadata";
-import SiteHeader from "@/components/SiteHeader";
-import SiteFooter from "@/components/SiteFooter";
-import FeaturedCarousel from "@/components/FeaturedCarousel";
-import ArticleList from "@/components/ArticleList";
-import PageInit from "@/components/PageInit";
-import TweaksPanel from "@/components/TweaksPanel";
-import type { Metadata } from "next";
+import { Suspense } from 'react';
+import {
+  getPosts,
+  getCategoryCounts,
+  getArchiveDates,
+  getFeaturedPosts,
+} from '@/lib/posts';
+import { buildSiteJsonLd } from '@/lib/metadata';
+import SiteHeader from '@/components/SiteHeader';
+import SiteFooter from '@/components/SiteFooter';
+import FeaturedCarousel from '@/components/FeaturedCarousel';
+import ArticleList from '@/components/ArticleList';
+import PageInit from '@/components/PageInit';
+import TweaksPanel from '@/components/TweaksPanel';
+import type { Metadata } from 'next';
 
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "공간을 둘러싼 분쟁, 법으로 풀어내다 — AUCTORITAS LAB",
+  title: '공간을 둘러싼 분쟁, 법으로 풀어내다 — AUCTORITAS LAB',
   description:
-    "공사대금·부동산·임대차 등 공간분쟁을 판례와 실무 기준으로 정리하는 법률 저널. 공간분쟁 전문 변호사팀이 직접 씁니다.",
+    '공사대금·부동산·임대차 등 공간분쟁을 판례와 실무 기준으로 정리하는 법률 저널. 공간분쟁 전문 변호사팀이 직접 씁니다.',
 };
 
 async function CarouselSection() {
@@ -30,8 +35,14 @@ interface ArticleSectionProps {
   page?: string;
 }
 
-async function ArticleSection({ cat, tag, q, archive, page }: ArticleSectionProps) {
-  const upToPage = Math.max(1, parseInt(page ?? "1", 10));
+async function ArticleSection({
+  cat,
+  tag,
+  q,
+  archive,
+  page,
+}: ArticleSectionProps) {
+  const upToPage = Math.max(1, parseInt(page ?? '1', 10));
   const [result, categoryCounts, archiveDates] = await Promise.all([
     getPosts({ category: cat, tag, query: q, archive, upToPage }),
     getCategoryCounts(),
@@ -48,17 +59,23 @@ async function ArticleSection({ cat, tag, q, archive, page }: ArticleSectionProp
       categoryCounts={categoryCounts}
       archiveDates={archiveDates}
       filters={{
-        cat: cat ?? "",
-        tag: tag ?? "",
-        q: q ?? "",
-        archive: archive ?? "",
+        cat: cat ?? '',
+        tag: tag ?? '',
+        q: q ?? '',
+        archive: archive ?? '',
       }}
     />
   );
 }
 
 interface Props {
-  searchParams: Promise<{ cat?: string; tag?: string; q?: string; archive?: string; page?: string }>;
+  searchParams: Promise<{
+    cat?: string;
+    tag?: string;
+    q?: string;
+    archive?: string;
+    page?: string;
+  }>;
 }
 
 export default async function HomePage({ searchParams }: Props) {
@@ -84,19 +101,34 @@ export default async function HomePage({ searchParams }: Props) {
             공간분쟁 판례·실무 저널
           </p>
           <h1 className="hero-lite__title">
-            공간을 둘러싼 분쟁,<br />법으로 풀어내다.
+            공간을 둘러싼 분쟁,
+            <br />
+            법으로 풀어내다.
           </h1>
           <p className="hero-lite__sub">
-            공사대금, 부동산, 임대차 등 공간분쟁을 판례와 실무 기준으로 정리합니다.
+            공사대금, 부동산, 임대차 등 공간분쟁을 판례와 실무 기준으로
+            정리합니다.
           </p>
         </section>
 
-        <Suspense fallback={<div style={{ width: "100%", aspectRatio: "21/9", maxHeight: "480px" }} />}>
+        <Suspense
+          fallback={
+            <div
+              style={{ width: '100%', aspectRatio: '21/9', maxHeight: '480px' }}
+            />
+          }
+        >
           <CarouselSection />
         </Suspense>
 
-        <Suspense fallback={<div style={{ minHeight: "60vh" }} />}>
-          <ArticleSection cat={sp.cat} tag={sp.tag} q={sp.q} archive={sp.archive} page={sp.page} />
+        <Suspense fallback={<div style={{ minHeight: '60vh' }} />}>
+          <ArticleSection
+            cat={sp.cat}
+            tag={sp.tag}
+            q={sp.q}
+            archive={sp.archive}
+            page={sp.page}
+          />
         </Suspense>
       </main>
 

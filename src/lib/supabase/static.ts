@@ -4,7 +4,7 @@
  * - sitemap()
  * - Any build-time data fetching that cannot access request cookies
  */
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from '@supabase/supabase-js';
 
 export function createStaticClient() {
   return createClient(

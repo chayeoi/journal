@@ -8,7 +8,7 @@ export type Profile = {
 export type FaqItem = { q: string; a: string };
 
 export type MentionItem = {
-  type: "CreativeWork" | "Legislation";
+  type: 'CreativeWork' | 'Legislation';
   name: string;
 };
 
@@ -46,20 +46,20 @@ export type PostListItem = {
   tags: string[];
   excerpt: string | null;
   reading_minutes: number | null;
-  author?: Pick<Profile, "id" | "display_name" | "avatar_url">;
+  author?: Pick<Profile, 'id' | 'display_name' | 'avatar_url'>;
 };
 
 export const CATEGORY_ORDER = [
-  "공사대금",
-  "임대차",
-  "부동산매매",
-  "상속",
-  "행정",
-  "재개발·재건축",
-  "가사·가족",
-  "AI·디지털",
-  "명도·인도",
-  "기타",
+  '공사대금',
+  '임대차',
+  '부동산매매',
+  '상속',
+  '행정',
+  '재개발·재건축',
+  '가사·가족',
+  'AI·디지털',
+  '명도·인도',
+  '기타',
 ] as const;
 
 export type PostsResult = {
