@@ -52,4 +52,11 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - run: pnpm build
+      - name: Build
+        run: |
+          if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ]; then
+            echo "⚠️ NEXT_PUBLIC_SUPABASE_URL secret이 설정되지 않아 빌드를 건너뜁니다."
+            echo "GitHub Settings > Secrets 에 NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY를 추가하면 빌드가 활성화됩니다."
+            exit 0
+          fi
+          pnpm build
