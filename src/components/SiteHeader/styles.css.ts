@@ -44,6 +44,28 @@ const brand = style({
   },
 });
 
+const brandLockup = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+});
+
+const brandTeam = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  marginLeft: 12,
+  fontSize: 14,
+  fontWeight: 600,
+  letterSpacing: '-0.01em',
+  color: 'var(--fg-2)',
+  whiteSpace: 'nowrap',
+  '@media': {
+    '(max-width: 640px)': {
+      marginLeft: 9,
+      fontSize: 12,
+    },
+  },
+});
+
 const spacer = style({
   flex: 1,
 });
@@ -74,6 +96,6 @@ globalStyle(`${cta} span`, {
   },
 });
 
-const styles = { root, inner, brand, spacer, cta };
+const styles = { root, inner, brand, brandLockup, brandTeam, spacer, cta };
 
 export default styles;
