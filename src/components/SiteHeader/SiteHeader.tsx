@@ -38,9 +38,12 @@ function SiteHeader() {
   return (
     <header className={styles.root} ref={ref}>
       <div className={styles.inner}>
-        <Link className={styles.brand} href="/">
-          AUCTORITAS LAB
-        </Link>
+        <span className={styles.brandLockup}>
+          <Link className={styles.brand} href="/">
+            AUCTORITAS LAB
+          </Link>
+          <span className={styles.brandTeam}>조국환 변호사팀</span>
+        </span>
         <span className={styles.spacer} />
         <a className={styles.cta} href="#site-footer">
           <span>상담 문의</span>
