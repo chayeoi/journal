@@ -1,5 +1,9 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Discovery Audit
+
+Run `pnpm audit:live` after production deploys. It checks live `robots.txt`, `/sitemap.xml`, `/api/posts`, and representative post pages so newly visible posts are discoverable by search crawlers.
+
 ## Getting Started
 
 First, run the development server:
