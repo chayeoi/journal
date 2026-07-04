@@ -5,6 +5,8 @@ import { getAllAuthorIds } from '@/lib/authors';
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? 'https://journal.fightingspirit.kr';
 
+export const revalidate = 60;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [slugs, authorIds] = await Promise.all([
     getAllPostSlugs(),
