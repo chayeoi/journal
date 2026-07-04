@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "audit:live": "node scripts/audit-live-discovery.mjs",
     "validate": "pnpm typecheck && pnpm lint",
     "prepare": "husky"
   },
