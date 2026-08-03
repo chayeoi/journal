@@ -13,6 +13,7 @@ import type {
 import { CATEGORY_ORDER } from '@/types';
 
 const PAGE_SIZE = 50;
+const SITEMAP_PAGE_SIZE = 1000;
 
 const POST_LIST_FIELDS =
   'id, post_number, title, thumbnail_url, author_id, category, published_at, created_at, tags, excerpt, reading_minutes';
@@ -298,14 +299,24 @@ export async function getAllPostSlugs(): Promise<
   { post_number: number; updated_at: string }[]
 > {
   const supabase = createStaticClient();
-  const { data, error } = await supabase
-    .from('posts')
-    .select('post_number, updated_at')
-    .eq('is_visible', true);
+  const rows: { post_number: number; updated_at: string }[] = [];
 
-  if (error) return [];
-  return (data ?? []).map(p => ({
-    post_number: p.post_number,
-    updated_at: p.updated_at,
-  }));
+  for (let from = 0; ; from += SITEMAP_PAGE_SIZE) {
+    const to = from + SITEMAP_PAGE_SIZE - 1;
+    const { data, error } = await supabase
+      .from('posts')
+      .select('post_number, updated_at')
+      .eq('is_visible', true)
+      .order('post_number', { ascending: true })
+      .range(from, to);
+
+    if (error) return [];
+
+    rows.push(
+      ...((data ?? []) as { post_number: number; updated_at: string }[]),
+    );
+    if (!data || data.length < SITEMAP_PAGE_SIZE) break;
+  }
+
+  return rows;
 }
