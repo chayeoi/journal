@@ -18,6 +18,7 @@ import PageInit from '@/components/PageInit';
 import TweaksPanel from '@/components/TweaksPanel';
 import PostCard from '@/components/PostCard';
 import FaqSection from '@/components/FaqSection';
+import ViewTracker from '@/components/ViewTracker';
 
 export const revalidate = 60;
 export const dynamicParams = true;
@@ -58,6 +59,7 @@ export default async function PostPage({ params }: Props) {
   return (
     <>
       <PageInit page="detail" cover="overlay" />
+      <ViewTracker postId={post.id} />
       <script
         dangerouslySetInnerHTML={{
           __html: `document.documentElement.setAttribute("data-cover","overlay");`,

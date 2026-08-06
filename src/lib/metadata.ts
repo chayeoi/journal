@@ -35,6 +35,7 @@ export const defaultMetadata: Metadata = {
   },
   alternates: { canonical: SITE_URL },
   verification: {
+    google: 'WWU92SV9ri08p3b_ru4UtOAFUQweaUJmSduRsoB7Hu4',
     other: {
       'naver-site-verification': '71b06ceb8098a274ce44eeb4dd9a18f917ebd162',
     },
