@@ -79,7 +79,7 @@ export const getAuthors = unstable_cache(
     return list;
   },
   ['authors'],
-  { revalidate: 300 },
+  { revalidate: 300, tags: ['posts'] },
 );
 
 /** /authors/{id} — 단일 저자 프로필 + 담당 글 목록 + 집필 수. */
@@ -138,5 +138,5 @@ export const getAllAuthorIds = unstable_cache(
     return [...new Set((data ?? []).map(p => p.author_id as string))];
   },
   ['all-author-ids'],
-  { revalidate: 60 },
+  { revalidate: 60, tags: ['posts'] },
 );
