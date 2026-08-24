@@ -109,7 +109,7 @@ const _cachedGetPosts = unstable_cache(
     return { posts, total, hasMore: to + 1 < total };
   },
   ['posts'],
-  { revalidate: 60 },
+  { revalidate: 60, tags: ['posts'] },
 );
 
 export async function getPosts(
@@ -150,7 +150,7 @@ export const getCategoryCounts = unstable_cache(
     return [{ category: 'all', count: total }, ...byCategory];
   },
   ['category-counts'],
-  { revalidate: 300 },
+  { revalidate: 300, tags: ['posts'] },
 );
 
 export const getArchiveDates = unstable_cache(
@@ -180,7 +180,7 @@ export const getArchiveDates = unstable_cache(
       });
   },
   ['archive-dates'],
-  { revalidate: 300 },
+  { revalidate: 300, tags: ['posts'] },
 );
 
 export const getFeaturedPosts = unstable_cache(
@@ -205,7 +205,7 @@ export const getFeaturedPosts = unstable_cache(
     return rows.map(p => mapToListItem(p, profilesMap));
   },
   ['featured-posts'],
-  { revalidate: 60 },
+  { revalidate: 60, tags: ['posts'] },
 );
 
 export async function getRelatedPosts(
@@ -320,5 +320,5 @@ export const getAllPostSlugs = unstable_cache(
     return rows;
   },
   ['all-post-slugs'],
-  { revalidate: 60 },
+  { revalidate: 60, tags: ['posts'] },
 );
