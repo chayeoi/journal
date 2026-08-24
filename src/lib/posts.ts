@@ -295,30 +295,31 @@ export async function getAllPostNumbers(): Promise<number[]> {
   return (data ?? []).map(p => p.post_number);
 }
 
-export const getAllPostSlugs = unstable_cache(
-  async (): Promise<{ post_number: number; updated_at: string }[]> => {
-    const supabase = createStaticClient();
-    const rows: { post_number: number; updated_at: string }[] = [];
+// sitemap.xml 전용 — force-dynamic 라우트에서만 호출되므로 캐시를 두지 않고
+// 매 요청 Supabase를 직접 조회한다 (unstable_cache의 revalidate/tags 기반
+// 무효화가 Vercel 프로덕션에서 반복적으로 실측 정체된 이력 때문).
+export async function getAllPostSlugs(): Promise<
+  { post_number: number; updated_at: string }[]
+> {
+  const supabase = createStaticClient();
+  const rows: { post_number: number; updated_at: string }[] = [];
 
-    for (let from = 0; ; from += SITEMAP_PAGE_SIZE) {
-      const to = from + SITEMAP_PAGE_SIZE - 1;
-      const { data, error } = await supabase
-        .from('posts')
-        .select('post_number, updated_at')
-        .eq('is_visible', true)
-        .order('post_number', { ascending: true })
-        .range(from, to);
+  for (let from = 0; ; from += SITEMAP_PAGE_SIZE) {
+    const to = from + SITEMAP_PAGE_SIZE - 1;
+    const { data, error } = await supabase
+      .from('posts')
+      .select('post_number, updated_at')
+      .eq('is_visible', true)
+      .order('post_number', { ascending: true })
+      .range(from, to);
 
-      if (error) return [];
+    if (error) return [];
 
-      rows.push(
-        ...((data ?? []) as { post_number: number; updated_at: string }[]),
-      );
-      if (!data || data.length < SITEMAP_PAGE_SIZE) break;
-    }
+    rows.push(
+      ...((data ?? []) as { post_number: number; updated_at: string }[]),
+    );
+    if (!data || data.length < SITEMAP_PAGE_SIZE) break;
+  }
 
-    return rows;
-  },
-  ['all-post-slugs'],
-  { revalidate: 60, tags: ['posts'] },
-);
+  return rows;
+}

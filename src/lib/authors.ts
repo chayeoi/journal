@@ -124,19 +124,22 @@ export const getAuthorById = cache(async function getAuthorById(
   };
 });
 
-/** 발행 글이 있는 저자 id 목록 — generateStaticParams / sitemap 용. */
-export const getAllAuthorIds = unstable_cache(
-  async (): Promise<string[]> => {
-    const supabase = createStaticClient();
-    const { data, error } = await supabase
-      .from('posts')
-      .select('author_id')
-      .eq('is_visible', true)
-      .not('author_id', 'is', null);
+async function fetchAllAuthorIds(): Promise<string[]> {
+  const supabase = createStaticClient();
+  const { data, error } = await supabase
+    .from('posts')
+    .select('author_id')
+    .eq('is_visible', true)
+    .not('author_id', 'is', null);
 
-    if (error) return [];
-    return [...new Set((data ?? []).map(p => p.author_id as string))];
-  },
-  ['all-author-ids'],
-  { revalidate: 60, tags: ['posts'] },
-);
+  if (error) return [];
+  return [...new Set((data ?? []).map(p => p.author_id as string))];
+}
+
+/** 발행 글이 있는 저자 id 목록 — generateStaticParams(빌드 타임)용. */
+export const getAllAuthorIds = unstable_cache(fetchAllAuthorIds, [
+  'all-author-ids',
+]);
+
+/** sitemap.xml 전용 — force-dynamic 라우트에서 매 요청 직접 조회. */
+export const getAllAuthorIdsUncached = fetchAllAuthorIds;
