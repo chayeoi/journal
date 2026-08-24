@@ -1,13 +1,14 @@
 import { getAllPostSlugs } from '@/lib/posts';
-import { getAllAuthorIds } from '@/lib/authors';
+import { getAllAuthorIdsUncached } from '@/lib/authors';
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? 'https://journal.fightingspirit.kr';
 
-// 메타데이터 라우트 컨벤션(app/sitemap.ts)의 revalidate가 프로덕션에서 적용되지
-// 않아 사이트맵이 배포 시점에 동결되는 문제(#54 이후에도 lastmod 미갱신 실측)로
-// 일반 라우트 핸들러로 전환. 라우트 핸들러의 ISR revalidate는 안정적으로 동작한다.
-export const revalidate = 60;
+// 시간 기반 revalidate(#54)와 태그 기반 revalidateTag/revalidatePath 웹훅(#60,
+// #61)까지 프로덕션에서 반복적으로 정체되는 것을 실측해서(Vercel 엣지 캐시가
+// 무효화 신호를 반영하지 않는 것으로 추정) 아예 캐시를 두지 않기로 결정.
+// 트래픽이 낮은 라우트라 매 요청 새로 계산해도 비용이 크지 않다.
+export const dynamic = 'force-dynamic';
 
 function xmlEscape(value: string): string {
   return value
@@ -39,7 +40,7 @@ function renderUrl(entry: Entry): string {
 export async function GET(): Promise<Response> {
   const [slugs, authorIds] = await Promise.all([
     getAllPostSlugs(),
-    getAllAuthorIds(),
+    getAllAuthorIdsUncached(),
   ]);
 
   const now = new Date().toISOString();
