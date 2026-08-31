@@ -13,16 +13,20 @@ function PostCard({ post, showReadingTime = true }: Props) {
   const tags = (post.tags ?? []).slice(0, 3);
   const readingTime = post.reading_minutes ?? 1;
   const dateStr = post.published_at ? fmtDate(post.published_at, 'short') : '';
+  const hasThumb = Boolean(post.thumbnail_url);
 
   return (
-    <article className={styles.root} data-cat={post.category ?? ''}>
+    <article
+      className={`${styles.root} ${hasThumb ? '' : styles.noThumb}`}
+      data-cat={post.category ?? ''}
+    >
       <Link
         className={styles.link}
         href={`/posts/${post.post_number}`}
         aria-label={post.title}
       >
-        <span className={styles.thumb}>
-          {post.thumbnail_url ? (
+        {post.thumbnail_url && (
+          <span className={styles.thumb}>
             <Image
               src={post.thumbnail_url}
               alt=""
@@ -30,21 +34,13 @@ function PostCard({ post, showReadingTime = true }: Props) {
               sizes="(max-width: 480px) calc(100vw - 40px), (max-width: 720px) calc(50vw - 36px), 380px"
               style={{ objectFit: 'cover' }}
             />
-          ) : (
-            <div
-              style={{
-                width: '100%',
-                height: '100%',
-                background: 'var(--surface-2)',
-              }}
-            />
-          )}
-          {post.category && (
-            <span className={`eyebrow ${styles.thumbCat}`}>
-              {post.category}
-            </span>
-          )}
-        </span>
+            {post.category && (
+              <span className={`eyebrow ${styles.thumbCat}`}>
+                {post.category}
+              </span>
+            )}
+          </span>
+        )}
         <span className={styles.body}>
           {post.category && (
             <span className={`eyebrow ${styles.kicker}`}>{post.category}</span>

@@ -4,6 +4,10 @@ const root = style({
   position: 'relative',
 });
 
+/** thumbnail_url이 없는 카드에 붙는 마커. 전역 data-thumb="off" 토글과 별개로,
+ * 개별 글에 썸네일이 없을 때 항상 적용된다. */
+const noThumb = style({});
+
 const link = style({
   display: 'flex',
   flexDirection: 'column',
@@ -44,6 +48,22 @@ const link = style({
       padding: '24px',
     },
     'html[data-thumb="off"][data-card="list"] &': {
+      padding: '24px 4px',
+    },
+    [`html[data-card="minimal"] ${noThumb} &`]: {
+      flexDirection: 'column',
+      padding: '26px 24px',
+    },
+    [`html[data-card="stacked"] ${noThumb} &`]: {
+      padding: '26px 24px',
+    },
+    [`html[data-card="overlay"] ${noThumb} &`]: {
+      position: 'relative',
+      border: '1px solid var(--line)',
+      borderRadius: 'var(--r-card)',
+      padding: '24px',
+    },
+    [`html[data-card="list"] ${noThumb} &`]: {
       padding: '24px 4px',
     },
   },
@@ -177,6 +197,13 @@ const body = style({
       padding: 0,
     },
     'html[data-thumb="off"][data-card="list"] &': { padding: 0 },
+    [`${noThumb} &`]: { paddingTop: 0 },
+    [`html[data-card="overlay"] ${noThumb} &`]: {
+      position: 'static',
+      inset: 'auto',
+      padding: 0,
+    },
+    [`html[data-card="list"] ${noThumb} &`]: { padding: 0 },
   },
 });
 
@@ -190,6 +217,7 @@ const kicker = style({
   marginBottom: 9,
   selectors: {
     'html[data-thumb="off"] &': { display: 'block' },
+    [`${noThumb} &`]: { display: 'block' },
   },
 });
 
@@ -210,6 +238,8 @@ const title = style({
     },
     'html[data-thumb="off"][data-card="overlay"] &': { color: 'var(--ink)' },
     'html[data-thumb="off"][data-card="minimal"] &': { fontSize: 19 },
+    [`html[data-card="overlay"] ${noThumb} &`]: { color: 'var(--ink)' },
+    [`html[data-card="minimal"] ${noThumb} &`]: { fontSize: 19 },
   },
 });
 
@@ -229,6 +259,10 @@ globalStyle(`html[data-card="overlay"] .${link}:hover .${title}`, {
   color: '#fff',
 });
 
+globalStyle(`html[data-card="overlay"] .${noThumb} .${link}:hover .${title}`, {
+  color: 'var(--ink)',
+});
+
 const excerpt = style({
   marginTop: 10,
   fontSize: 14,
@@ -243,6 +277,7 @@ const excerpt = style({
     'html[data-card="overlay"] &': { color: 'rgba(255,255,255,.8)' },
     'html[data-card="list"] &': { fontSize: 14.5 },
     'html[data-thumb="off"][data-card="overlay"] &': { color: 'var(--fg-2)' },
+    [`html[data-card="overlay"] ${noThumb} &`]: { color: 'var(--fg-2)' },
   },
 });
 
@@ -294,6 +329,7 @@ const by = style({
   selectors: {
     'html[data-card="overlay"] &': { color: '#fff' },
     'html[data-thumb="off"][data-card="overlay"] &': { color: 'var(--ink)' },
+    [`html[data-card="overlay"] ${noThumb} &`]: { color: 'var(--ink)' },
   },
 });
 
@@ -307,6 +343,7 @@ const metaline = style({
   selectors: {
     'html[data-card="overlay"] &': { color: 'rgba(255,255,255,.74)' },
     'html[data-thumb="off"][data-card="overlay"] &': { color: 'var(--fg-3)' },
+    [`html[data-card="overlay"] ${noThumb} &`]: { color: 'var(--fg-3)' },
   },
 });
 
@@ -335,8 +372,14 @@ globalStyle(`html[data-thumb="off"][data-card="overlay"] .${foot} .avatar`, {
   color: '#fff',
 });
 
+globalStyle(`html[data-card="overlay"] .${noThumb} .${foot} .avatar`, {
+  background: 'var(--ink)',
+  color: '#fff',
+});
+
 const styles = {
   root,
+  noThumb,
   link,
   thumb,
   thumbCat,

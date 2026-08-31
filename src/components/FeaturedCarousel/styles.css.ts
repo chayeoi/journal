@@ -108,19 +108,18 @@ const slideMedia = style({
   },
 });
 
-globalStyle(`${slideMedia} img`, {
-  width: '100%',
-  height: '100%',
-  objectFit: 'cover',
-  display: 'block',
+const slideTint = style({});
+
+globalStyle(`.${slideTint} .${slideMedia}`, {
+  backgroundImage: 'var(--tint)',
 });
 
 const slideShade = style({
   position: 'absolute',
   inset: 0,
   background: `
-    linear-gradient(90deg, rgba(8,8,10,.82) 0%, rgba(8,8,10,.5) 44%, rgba(8,8,10,.04) 78%),
-    linear-gradient(0deg, rgba(8,8,10,.6) 0%, rgba(8,8,10,0) 52%)
+    linear-gradient(90deg, rgba(8,8,10,.46) 0%, rgba(8,8,10,.16) 54%, rgba(8,8,10,0) 86%),
+    linear-gradient(0deg, rgba(8,8,10,.4) 0%, rgba(8,8,10,0) 58%)
   `,
   selectors: {
     'html[data-carousel="split"] &': { display: 'none' },
@@ -375,6 +374,7 @@ const styles = {
   track,
   slide,
   slideMedia,
+  slideTint,
   slideShade,
   slideInner,
   slideCat,

@@ -308,6 +308,9 @@ a.plain,
   height: 100%;
   object-fit: cover;
 }
+.artcover--tint {
+  background-image: var(--tint);
+}
 
 html[data-cover='banner'] .arthead {
   padding-bottom: 0;
@@ -351,6 +354,14 @@ html[data-cover='overlay'] .artcover::after {
     rgba(8, 8, 10, 0.9) 0%,
     rgba(8, 8, 10, 0.46) 50%,
     rgba(8, 8, 10, 0.12) 100%
+  );
+}
+html[data-cover='overlay'] .artcover--tint::after {
+  background: linear-gradient(
+    0deg,
+    rgba(8, 8, 10, 0.6) 0%,
+    rgba(8, 8, 10, 0.2) 56%,
+    rgba(8, 8, 10, 0) 100%
   );
 }
 html[data-cover='overlay'] .arthead__text {
