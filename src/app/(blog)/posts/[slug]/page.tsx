@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import type { CSSProperties } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import {
   getPostByNumber,
@@ -104,11 +105,24 @@ export default async function PostPage({ params }: Props) {
               </span>
             </div>
           </div>
-          <figure
-            className="artcover artcover--tint"
-            style={{ '--tint': tintBg(post.id) } as CSSProperties}
-            aria-hidden="true"
-          />
+          {post.thumbnail_url ? (
+            <figure className="artcover">
+              <Image
+                src={post.thumbnail_url}
+                alt=""
+                fill
+                priority
+                sizes="(max-width: 720px) 100vw, 1180px"
+                style={{ objectFit: 'cover' }}
+              />
+            </figure>
+          ) : (
+            <figure
+              className="artcover artcover--tint"
+              style={{ '--tint': tintBg(post.id) } as CSSProperties}
+              aria-hidden="true"
+            />
+          )}
         </header>
 
         <div className="artbody">

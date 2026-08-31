@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { CSSProperties } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { tintBg } from '@/lib/coverTints';
 import type { PostListItem } from '@/types';
@@ -67,12 +68,31 @@ function FeaturedCarousel({ posts }: Props) {
           {posts.map((post, i) => (
             <Link
               key={post.id}
-              className={`${styles.slide} ${styles.slideTint}`}
+              className={
+                post.thumbnail_url
+                  ? styles.slide
+                  : `${styles.slide} ${styles.slideTint}`
+              }
               href={`/posts/${post.post_number}`}
               aria-hidden={i !== current}
-              style={{ '--tint': tintBg(post.id) } as CSSProperties}
+              style={
+                post.thumbnail_url
+                  ? undefined
+                  : ({ '--tint': tintBg(post.id) } as CSSProperties)
+              }
             >
-              <span className={styles.slideMedia} />
+              <span className={styles.slideMedia}>
+                {post.thumbnail_url && (
+                  <Image
+                    src={post.thumbnail_url}
+                    alt=""
+                    fill
+                    style={{ objectFit: 'cover' }}
+                    priority={i === 0}
+                    sizes="(max-width: 720px) 100vw, 1180px"
+                  />
+                )}
+              </span>
               <span className={styles.slideShade} />
               <span className={styles.slideInner}>
                 {post.category && (
