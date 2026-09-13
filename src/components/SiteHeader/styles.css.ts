@@ -59,15 +59,45 @@ const brandTeam = style({
   color: 'var(--fg-2)',
   whiteSpace: 'nowrap',
   '@media': {
-    '(max-width: 640px)': {
-      marginLeft: 9,
-      fontSize: 12,
+    '(max-width: 760px)': {
+      display: 'none',
     },
   },
 });
 
 const spacer = style({
   flex: 1,
+});
+
+const nav = style({
+  display: 'flex',
+  alignItems: 'center',
+});
+
+const navLink = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  minHeight: 40,
+  padding: '0 4px',
+  fontSize: 13,
+  fontWeight: 700,
+  color: 'var(--fg-2)',
+  textDecoration: 'none',
+  transition: 'color var(--d) var(--ease)',
+  selectors: {
+    '&:hover': { color: 'var(--accent)' },
+    '&[aria-current="page"]': { color: 'var(--ink)' },
+    '&:focus-visible': {
+      outline: '3px solid var(--accent-ring)',
+      outlineOffset: 2,
+      borderRadius: 'var(--r-btn)',
+    },
+  },
+  '@media': {
+    '(max-width: 420px)': {
+      fontSize: 12,
+    },
+  },
 });
 
 const cta = style({
@@ -96,6 +126,16 @@ globalStyle(`${cta} span`, {
   },
 });
 
-const styles = { root, inner, brand, brandLockup, brandTeam, spacer, cta };
+const styles = {
+  root,
+  inner,
+  brand,
+  brandLockup,
+  brandTeam,
+  spacer,
+  nav,
+  navLink,
+  cta,
+};
 
 export default styles;

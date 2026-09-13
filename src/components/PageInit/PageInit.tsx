@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 
 interface Props {
-  page: 'home' | 'detail' | 'authors' | 'author';
+  page: 'home' | 'detail' | 'authors' | 'author' | 'self-litigation';
   cover?: 'overlay';
 }
 
