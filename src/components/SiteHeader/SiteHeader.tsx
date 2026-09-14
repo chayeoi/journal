@@ -2,12 +2,10 @@
 
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import styles from './styles.css';
 
 function SiteHeader() {
   const ref = useRef<HTMLElement>(null);
-  const pathname = usePathname();
 
   useEffect(() => {
     const header = ref.current;
@@ -47,15 +45,6 @@ function SiteHeader() {
           <span className={styles.brandTeam}>조국환 변호사팀</span>
         </span>
         <span className={styles.spacer} />
-        <nav className={styles.nav} aria-label="주요 메뉴">
-          <Link
-            className={styles.navLink}
-            href="/self-litigation"
-            aria-current={pathname === '/self-litigation' ? 'page' : undefined}
-          >
-            나홀로소송
-          </Link>
-        </nav>
         <a className={styles.cta} href="#site-footer">
           <span>상담 문의</span>
         </a>

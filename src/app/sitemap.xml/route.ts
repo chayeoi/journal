@@ -52,12 +52,6 @@ export async function GET(): Promise<Response> {
       changefreq: 'monthly',
       priority: '0.6',
     },
-    {
-      loc: `${SITE_URL}/self-litigation`,
-      lastmod: now,
-      changefreq: 'weekly',
-      priority: '0.8',
-    },
     ...authorIds.map(id => ({
       loc: `${SITE_URL}/authors/${id}`,
       lastmod: now,
