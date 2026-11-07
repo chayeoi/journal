@@ -20,6 +20,7 @@ import PageInit from '@/components/PageInit';
 import TweaksPanel from '@/components/TweaksPanel';
 import PostCard from '@/components/PostCard';
 import FaqSection from '@/components/FaqSection';
+import ConsultNote from '@/components/ConsultNote';
 
 export const revalidate = 60;
 export const dynamicParams = true;
@@ -214,7 +215,7 @@ export default async function PostPage({ params }: Props) {
                 </Link>
               )}
 
-              {/* <ConsultNote /> */}
+              <ConsultNote />
             </div>
           </article>
         </div>
