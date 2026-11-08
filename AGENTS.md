@@ -6,6 +6,12 @@
 - 어드민 대시보드(글 작성/발행)는 별도 구현됨. 이 레포는 퍼블릭 블로그만 담당
 - 데이터 소스: Supabase (PostgreSQL) — 별도 CMS 서비스 없음
 
+## 디자인 시안 (Claude Design)
+
+- 프로젝트 **Team CHO Journal**: https://claude.ai/artifact/RHR9j3wZFtfzHGX2nTL5tL (2026-11-07 독립 사이트 claude.ai/design에서 Claude 아티팩트로 옮겨짐. 옛 주소 `claude.ai/design/p/730e414c-4918-4618-af7b-0a6ac92e44dd`는 읽기 전용)
+- 화면별 파일은 `project/<파일>` 경로다(목록: `project/compat.json`). 글 상세는 `project/article.html`, 홈은 `project/index.html`, 집필진은 `project/author.html`·`project/authors.html`.
+- 읽기·수정은 Claude Code Artifact 도구(`read`/publish, `url`은 위 주소)로 하거나 claude.ai에서 열어 그 안에서 고친다.
+
 ## 기술 스택
 
 - **Framework:** Next.js (App Router) + TypeScript
