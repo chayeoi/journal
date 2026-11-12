@@ -1,6 +1,7 @@
 import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
 import { createStaticClient } from '@/lib/supabase/static';
+import { isInvalidKeyError, throwQueryError } from '@/lib/supabase/errors';
 import type {
   AuthorListItem,
   AuthorDetail,
@@ -88,21 +89,30 @@ export const getAuthorById = cache(async function getAuthorById(
 ): Promise<AuthorDetail | null> {
   const supabase = createStaticClient();
 
+  // maybeSingle: 행이 없으면 error 없이 data === null. 형식이 맞지 않는 id
+  // (22P02)도 있을 수 없는 저자다. 그 밖의 error는 일시적 DB 오류이므로 던져서
+  // 404(noindex)나 글 0개인 저자 페이지가 ISR에 캐시되지 않게 한다.
   const { data: profile, error } = await supabase
     .from('profiles')
     .select(AUTHOR_PROFILE_FIELDS)
     .eq('id', id)
-    .single();
+    .maybeSingle();
 
-  if (error || !profile) return null;
+  if (error) {
+    if (isInvalidKeyError(error)) return null;
+    throwQueryError(`authors/${id}`, error);
+  }
+  if (!profile) return null;
 
-  const { data: rows } = await supabase
+  const { data: rows, error: postsError } = await supabase
     .from('posts')
     .select(POST_LIST_FIELDS)
     .eq('is_visible', true)
     .eq('author_id', id)
     .order('published_at', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false });
+
+  if (postsError) throwQueryError(`authors/${id} 글 목록`, postsError);
 
   const authorMini = {
     id: profile.id as string,
@@ -132,14 +142,18 @@ async function fetchAllAuthorIds(): Promise<string[]> {
     .eq('is_visible', true)
     .not('author_id', 'is', null);
 
-  if (error) return [];
+  // 사이트맵이 저자 없이 나가지 않도록 오류는 던진다.
+  if (error) throwQueryError('author ids', error);
   return [...new Set((data ?? []).map(p => p.author_id as string))];
 }
 
 /** 발행 글이 있는 저자 id 목록 — generateStaticParams(빌드 타임)용. */
-export const getAllAuthorIds = unstable_cache(fetchAllAuthorIds, [
-  'all-author-ids',
-]);
+// 빌드 타임 사전 렌더 목록일 뿐이라 오류면 기존처럼 빈 목록으로 두고
+// (dynamicParams로 요청 시 렌더) 빌드를 막지 않는다.
+export const getAllAuthorIds = unstable_cache(
+  () => fetchAllAuthorIds().catch(() => [] as string[]),
+  ['all-author-ids'],
+);
 
 /** sitemap.xml 전용 — force-dynamic 라우트에서 매 요청 직접 조회. */
 export const getAllAuthorIdsUncached = fetchAllAuthorIds;
