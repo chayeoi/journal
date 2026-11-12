@@ -1,6 +1,7 @@
 import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
 import { createStaticClient } from '@/lib/supabase/static';
+import { throwQueryError } from '@/lib/supabase/errors';
 import type {
   Post,
   PostListItem,
@@ -260,24 +261,33 @@ export async function getRelatedPosts(
 export const getPostByNumber = cache(async function getPostByNumber(
   postNumber: number,
 ): Promise<Post | null> {
+  // /posts/abc 같은 주소는 조회할 필요 없이 "없는 글"이다.
+  if (!Number.isSafeInteger(postNumber)) return null;
+
   const supabase = createStaticClient();
 
+  // maybeSingle: 행이 없으면 error 없이 data === null. 그 밖의 error는
+  // 일시적 DB 오류이므로 던져서 404(noindex)가 ISR에 캐시되지 않게 한다.
   const { data, error } = await supabase
     .from('posts')
     .select('*')
     .eq('post_number', postNumber)
     .eq('is_visible', true)
-    .single();
+    .maybeSingle();
 
-  if (error || !data) return null;
+  if (error) throwQueryError(`posts/${postNumber}`, error);
+  if (!data) return null;
 
   let author: Profile | undefined;
   if (data.author_id) {
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id, display_name, bio, avatar_url')
       .eq('id', data.author_id)
-      .single();
+      .maybeSingle();
+    if (profileError) {
+      throwQueryError(`posts/${postNumber} 저자 프로필`, profileError);
+    }
     if (profile) author = profile as Profile;
   }
 
@@ -313,7 +323,8 @@ export async function getAllPostSlugs(): Promise<
       .order('post_number', { ascending: true })
       .range(from, to);
 
-    if (error) return [];
+    // 빈 사이트맵을 내보내지 않도록 오류는 던져 5xx로 응답한다.
+    if (error) throwQueryError('sitemap posts', error);
 
     rows.push(
       ...((data ?? []) as { post_number: number; updated_at: string }[]),
