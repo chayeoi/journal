@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   getPostByNumber,
-  getAllPostNumbers,
+  getRecentPostNumbers,
   getRelatedPosts,
 } from '@/lib/posts';
 import { buildPostMetadata, buildPostJsonLd } from '@/lib/metadata';
@@ -22,13 +22,16 @@ import PostCard from '@/components/PostCard';
 import FaqSection from '@/components/FaqSection';
 import ConsultNote from '@/components/ConsultNote';
 
-export const revalidate = 60;
+// 글 수정은 웹훅(revalidateTag('posts'))이 즉시 반영한다. 시간 기반 재생성은 안전망(1시간).
+export const revalidate = 3600;
 export const dynamicParams = true;
 
 type Props = { params: Promise<{ slug: string }> };
 
+// 빌드 때는 최근 글만 미리 만든다(전체 글을 만들면 배포마다 글 수 × 조회가 몰린다).
+// 나머지는 첫 방문 때 만들어 캐시한다.
 export async function generateStaticParams() {
-  const numbers = await getAllPostNumbers();
+  const numbers = await getRecentPostNumbers();
   return numbers.map(n => ({ slug: String(n) }));
 }
 

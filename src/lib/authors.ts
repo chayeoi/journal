@@ -1,5 +1,6 @@
 import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
+import { POSTS_CACHE_SECONDS } from '@/lib/posts';
 import { createStaticClient } from '@/lib/supabase/static';
 import { isInvalidKeyError, throwQueryError } from '@/lib/supabase/errors';
 import type {
@@ -38,7 +39,7 @@ function mapToListItem(
  * /authors — 발행 글이 있는 모든 저자(이름 + 간략 소개).
  * 집필 수 → 이름(가나다) 정렬. 집필 수는 정렬에만 쓰고 노출하지 않는다.
  */
-export const getAuthors = unstable_cache(
+const _cachedAuthors = unstable_cache(
   async (): Promise<AuthorListItem[]> => {
     const supabase = createStaticClient();
 
@@ -48,7 +49,9 @@ export const getAuthors = unstable_cache(
       .eq('is_visible', true)
       .not('author_id', 'is', null);
 
-    if (error || !posts?.length) return [];
+    // DB 오류는 던져서 빈 목록이 캐시되지 않게 한다(바깥 getAuthors가 잡는다).
+    if (error) throw error;
+    if (!posts?.length) return [];
 
     const countByAuthor = new Map<string, number>();
     for (const p of posts) {
@@ -59,10 +62,11 @@ export const getAuthors = unstable_cache(
     const authorIds = [...countByAuthor.keys()];
     if (!authorIds.length) return [];
 
-    const { data: profiles } = await supabase
+    const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
       .select(AUTHOR_PROFILE_FIELDS)
       .in('id', authorIds);
+    if (profilesError) throw profilesError;
 
     const list: AuthorListItem[] = (profiles ?? []).map(p => ({
       id: p.id as string,
@@ -80,58 +84,72 @@ export const getAuthors = unstable_cache(
     return list;
   },
   ['authors'],
-  { revalidate: 300, tags: ['posts'] },
+  { revalidate: POSTS_CACHE_SECONDS, tags: ['posts', 'profiles'] },
 );
 
-/** /authors/{id} — 단일 저자 프로필 + 담당 글 목록 + 집필 수. */
+export async function getAuthors(): Promise<AuthorListItem[]> {
+  try {
+    return await _cachedAuthors();
+  } catch {
+    return [];
+  }
+}
+
+/** /authors/{id} — 단일 저자 프로필 + 담당 글 목록 + 집필 수. 'posts' 태그로 캐시해 웹훅이 함께 무효화한다. */
+const _cachedAuthorById = unstable_cache(
+  async (id: string): Promise<AuthorDetail | null> => {
+    const supabase = createStaticClient();
+
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select(AUTHOR_PROFILE_FIELDS)
+      .eq('id', id)
+      .maybeSingle();
+
+    // maybeSingle: 행이 없으면 data === null. 형식이 맞지 않는 id(22P02)도 있을 수 없는 저자다.
+    // 그 밖의 error는 일시적 DB 오류이므로 던져서 404(noindex)가 캐시되지 않게 한다(#71).
+    if (error) {
+      if (isInvalidKeyError(error)) return null;
+      throwQueryError(`authors/${id}`, error);
+    }
+    if (!profile) return null;
+
+    const { data: rows, error: postsError } = await supabase
+      .from('posts')
+      .select(POST_LIST_FIELDS)
+      .eq('is_visible', true)
+      .eq('author_id', id)
+      .order('published_at', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false });
+    if (postsError) throwQueryError(`authors/${id} 글 목록`, postsError);
+
+    const authorMini = {
+      id: profile.id as string,
+      display_name: profile.display_name as string,
+      avatar_url: (profile.avatar_url as string | null) ?? null,
+    };
+
+    const posts: PostListItem[] = (rows ?? []).map(p =>
+      mapToListItem(p as Record<string, unknown>, authorMini),
+    );
+
+    return {
+      id: profile.id as string,
+      display_name: profile.display_name as string,
+      bio: (profile.bio as string | null) ?? null,
+      avatar_url: (profile.avatar_url as string | null) ?? null,
+      post_count: posts.length,
+      posts,
+    };
+  },
+  ['author-by-id'],
+  { revalidate: POSTS_CACHE_SECONDS, tags: ['posts', 'profiles'] },
+);
+
 export const getAuthorById = cache(async function getAuthorById(
   id: string,
 ): Promise<AuthorDetail | null> {
-  const supabase = createStaticClient();
-
-  // maybeSingle: 행이 없으면 error 없이 data === null. 형식이 맞지 않는 id
-  // (22P02)도 있을 수 없는 저자다. 그 밖의 error는 일시적 DB 오류이므로 던져서
-  // 404(noindex)나 글 0개인 저자 페이지가 ISR에 캐시되지 않게 한다.
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select(AUTHOR_PROFILE_FIELDS)
-    .eq('id', id)
-    .maybeSingle();
-
-  if (error) {
-    if (isInvalidKeyError(error)) return null;
-    throwQueryError(`authors/${id}`, error);
-  }
-  if (!profile) return null;
-
-  const { data: rows, error: postsError } = await supabase
-    .from('posts')
-    .select(POST_LIST_FIELDS)
-    .eq('is_visible', true)
-    .eq('author_id', id)
-    .order('published_at', { ascending: false, nullsFirst: false })
-    .order('created_at', { ascending: false });
-
-  if (postsError) throwQueryError(`authors/${id} 글 목록`, postsError);
-
-  const authorMini = {
-    id: profile.id as string,
-    display_name: profile.display_name as string,
-    avatar_url: (profile.avatar_url as string | null) ?? null,
-  };
-
-  const posts: PostListItem[] = (rows ?? []).map(p =>
-    mapToListItem(p as Record<string, unknown>, authorMini),
-  );
-
-  return {
-    id: profile.id as string,
-    display_name: profile.display_name as string,
-    bio: (profile.bio as string | null) ?? null,
-    avatar_url: (profile.avatar_url as string | null) ?? null,
-    post_count: posts.length,
-    posts,
-  };
+  return _cachedAuthorById(id);
 });
 
 async function fetchAllAuthorIds(): Promise<string[]> {
