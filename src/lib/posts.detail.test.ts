@@ -42,6 +42,7 @@ vi.mock('@/lib/supabase/static', () => ({
         'order',
         'limit',
         'single',
+        'maybeSingle',
       ]) {
         builder[m] = (...args: unknown[]) => {
           call.ops.push(`${m}:${JSON.stringify(args)}`);
@@ -89,8 +90,8 @@ describe('getPostByNumber', () => {
     expect(calls.filter(c => c.table === 'profiles')).toHaveLength(1);
   });
 
-  it('행이 없으면(PGRST116) null', async () => {
-    state.respond = () => ({ data: null, error: { code: 'PGRST116' } });
+  it('행이 없으면(maybeSingle data null) null', async () => {
+    state.respond = () => ({ data: null, error: null });
     const { getPostByNumber } = await import('@/lib/posts');
     expect(await getPostByNumber(999)).toBeNull();
   });
@@ -101,7 +102,7 @@ describe('getPostByNumber', () => {
       error: { code: '57014', message: 'timeout' },
     });
     const { getPostByNumber } = await import('@/lib/posts');
-    await expect(getPostByNumber(8)).rejects.toMatchObject({ code: '57014' });
+    await expect(getPostByNumber(8)).rejects.toThrow(/code=57014/);
   });
 
   it('잘못된 글 번호는 조회하지 않고 null', async () => {

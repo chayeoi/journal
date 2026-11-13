@@ -121,7 +121,7 @@ const _cachedAuthorById = unstable_cache(
       .eq('author_id', id)
       .order('published_at', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false });
-    if (postsError) throw postsError;
+    if (postsError) throwQueryError(`authors/${id} 글 목록`, postsError);
 
     const authorMini = {
       id: profile.id as string,
