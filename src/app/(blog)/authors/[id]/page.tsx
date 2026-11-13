@@ -11,7 +11,7 @@ import TweaksPanel from '@/components/TweaksPanel';
 import PostCard from '@/components/PostCard';
 import styles from './styles.css';
 
-export const revalidate = 300;
+export const revalidate = 3600;
 export const dynamicParams = true;
 
 type Props = { params: Promise<{ id: string }> };

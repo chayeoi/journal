@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { getPosts } from '@/lib/posts';
 
-export const revalidate = 60;
+export const revalidate = 3600;
 
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;

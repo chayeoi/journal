@@ -16,44 +16,78 @@ import { CATEGORY_ORDER } from '@/types';
 const PAGE_SIZE = 50;
 const SITEMAP_PAGE_SIZE = 1000;
 
+// 글 쓰기·수정은 DB 웹훅(/api/revalidate → revalidateTag('posts'))이 즉시 반영한다.
+// 시간 기반 재검증은 웹훅이 누락됐을 때의 안전망이라 1시간으로 둔다(이전 60초).
+// 라우트 세그먼트의 `export const revalidate`는 리터럴만 허용되므로 페이지에는 3600을 직접 적는다.
+export const POSTS_CACHE_SECONDS = 3600;
+
+// 빌드 때 미리 만드는 글 상세 수. 나머지는 첫 방문 때 만들어 캐시한다(dynamicParams = true).
+export const PRERENDER_POST_COUNT = 20;
+
 const POST_LIST_FIELDS =
   'id, post_number, title, thumbnail_url, author_id, category, published_at, created_at, tags, excerpt, reading_minutes';
 
+// 캐시 원칙
+// - unstable_cache 안에서 부른 unstable_cache는 캐시를 건너뛴다(Next.js 동작). 그래서 작성자 캐시는
+//   글 캐시 안에서 부르지 않고, 글 캐시 결과에 요청 시점에 붙인다(withAuthors). 그래야 모든 글 페이지가
+//   작성자 캐시 하나를 공유한다.
+// - 캐시 함수 안에서는 DB 오류를 던진다. 빈 결과가 1시간 동안 캐시되지 않게 하기 위해서다.
+//   화면을 비워서라도 보여 줘야 하는 곳은 캐시 바깥에서 잡는다.
+
+// 작성자 정보는 거의 바뀌지 않으므로 id 묶음 기준으로 캐시한다(글 상세·목록마다 profiles 재조회 방지).
+const _cachedAuthorRows = unstable_cache(
+  async (authorIds: string[]): Promise<Profile[]> => {
+    const supabase = createStaticClient();
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, display_name, bio, avatar_url')
+      .in('id', authorIds);
+    if (error) throw error;
+    return (data ?? []) as Profile[];
+  },
+  ['author-rows'],
+  { revalidate: POSTS_CACHE_SECONDS, tags: ['posts', 'profiles'] },
+);
+
 async function fetchAuthors(
-  supabase: ReturnType<typeof createStaticClient>,
   authorIds: string[],
-): Promise<Map<string, Pick<Profile, 'id' | 'display_name' | 'avatar_url'>>> {
-  const map = new Map<
-    string,
-    Pick<Profile, 'id' | 'display_name' | 'avatar_url'>
-  >();
-  if (!authorIds.length) return map;
-  const { data } = await supabase
-    .from('profiles')
-    .select('id, display_name, avatar_url')
-    .in('id', authorIds);
-  data?.forEach(p => map.set(p.id, p));
+): Promise<Map<string, Profile>> {
+  const map = new Map<string, Profile>();
+  const ids = [...new Set(authorIds)].sort();
+  if (!ids.length) return map;
+  const rows = await _cachedAuthorRows(ids);
+  rows.forEach(p => map.set(p.id, p));
   return map;
 }
 
-function mapToListItem(
-  p: Record<string, unknown>,
-  profilesMap: Map<string, Pick<Profile, 'id' | 'display_name' | 'avatar_url'>>,
-): PostListItem {
-  const authorId = p.author_id as string | null;
+async function withAuthors(items: PostListItem[]): Promise<PostListItem[]> {
+  const map = await fetchAuthors(
+    items.map(p => p.author_id).filter((id): id is string => !!id),
+  );
+  return items.map(p => {
+    const a = p.author_id ? map.get(p.author_id) : undefined;
+    return {
+      ...p,
+      author: a
+        ? { id: a.id, display_name: a.display_name, avatar_url: a.avatar_url }
+        : undefined,
+    };
+  });
+}
+
+function mapToListItem(p: Record<string, unknown>): PostListItem {
   return {
     id: p.id as string,
     post_number: p.post_number as number,
     title: p.title as string,
     thumbnail_url: (p.thumbnail_url as string | null) ?? null,
-    author_id: authorId,
+    author_id: (p.author_id as string | null) ?? null,
     category: (p.category as string | null) ?? null,
     published_at: (p.published_at as string | null) ?? null,
     created_at: p.created_at as string,
     tags: (p.tags as string[]) ?? [],
     excerpt: (p.excerpt as string | null) ?? null,
     reading_minutes: (p.reading_minutes as number | null) ?? null,
-    author: authorId ? profilesMap.get(authorId) : undefined,
   };
 }
 
@@ -99,18 +133,11 @@ const _cachedGetPosts = unstable_cache(
     if (error) throw error;
 
     const rows = (data ?? []) as Record<string, unknown>[];
-    const authorIds = [
-      ...new Set(rows.map(p => p.author_id as string | null).filter(Boolean)),
-    ] as string[];
-    const profilesMap = await fetchAuthors(supabase, authorIds);
-
     const total = count ?? 0;
-    const posts = rows.map(p => mapToListItem(p, profilesMap));
-
-    return { posts, total, hasMore: to + 1 < total };
+    return { posts: rows.map(mapToListItem), total, hasMore: to + 1 < total };
   },
-  ['posts'],
-  { revalidate: 60, tags: ['posts'] },
+  ['posts-v2'],
+  { revalidate: POSTS_CACHE_SECONDS, tags: ['posts'] },
 );
 
 export async function getPosts(
@@ -124,10 +151,18 @@ export async function getPosts(
     page = 1,
     upToPage = 0,
   } = params;
-  return _cachedGetPosts(category, tag, query, archive, page, upToPage);
+  const result = await _cachedGetPosts(
+    category,
+    tag,
+    query,
+    archive,
+    page,
+    upToPage,
+  );
+  return { ...result, posts: await withAuthors(result.posts) };
 }
 
-export const getCategoryCounts = unstable_cache(
+const _cachedCategoryCounts = unstable_cache(
   async (): Promise<CategoryCount[]> => {
     const supabase = createStaticClient();
     const { data, error } = await supabase
@@ -135,7 +170,7 @@ export const getCategoryCounts = unstable_cache(
       .select('category')
       .eq('is_visible', true);
 
-    if (error) return [];
+    if (error) throw error;
 
     const counts = new Map<string, number>();
     let total = 0;
@@ -151,10 +186,18 @@ export const getCategoryCounts = unstable_cache(
     return [{ category: 'all', count: total }, ...byCategory];
   },
   ['category-counts'],
-  { revalidate: 300, tags: ['posts'] },
+  { revalidate: POSTS_CACHE_SECONDS, tags: ['posts'] },
 );
 
-export const getArchiveDates = unstable_cache(
+export async function getCategoryCounts(): Promise<CategoryCount[]> {
+  try {
+    return await _cachedCategoryCounts();
+  } catch {
+    return [];
+  }
+}
+
+const _cachedArchiveDates = unstable_cache(
   async (): Promise<ArchiveDate[]> => {
     const supabase = createStaticClient();
     const { data, error } = await supabase
@@ -163,7 +206,7 @@ export const getArchiveDates = unstable_cache(
       .eq('is_visible', true)
       .not('published_at', 'is', null);
 
-    if (error) return [];
+    if (error) throw error;
 
     const counts = new Map<string, number>();
     (data ?? []).forEach(p => {
@@ -181,10 +224,18 @@ export const getArchiveDates = unstable_cache(
       });
   },
   ['archive-dates'],
-  { revalidate: 300, tags: ['posts'] },
+  { revalidate: POSTS_CACHE_SECONDS, tags: ['posts'] },
 );
 
-export const getFeaturedPosts = unstable_cache(
+export async function getArchiveDates(): Promise<ArchiveDate[]> {
+  try {
+    return await _cachedArchiveDates();
+  } catch {
+    return [];
+  }
+}
+
+const _cachedFeaturedPosts = unstable_cache(
   async (): Promise<PostListItem[]> => {
     const supabase = createStaticClient();
     const { data, error } = await supabase
@@ -195,18 +246,69 @@ export const getFeaturedPosts = unstable_cache(
       .order('created_at', { ascending: false })
       .limit(5);
 
-    if (error) return [];
-
-    const rows = (data ?? []) as Record<string, unknown>[];
-    const authorIds = [
-      ...new Set(rows.map(p => p.author_id as string | null).filter(Boolean)),
-    ] as string[];
-    const profilesMap = await fetchAuthors(supabase, authorIds);
-
-    return rows.map(p => mapToListItem(p, profilesMap));
+    if (error) throw error;
+    return ((data ?? []) as Record<string, unknown>[]).map(mapToListItem);
   },
-  ['featured-posts'],
-  { revalidate: 60, tags: ['posts'] },
+  ['featured-posts-v2'],
+  { revalidate: POSTS_CACHE_SECONDS, tags: ['posts'] },
+);
+
+export async function getFeaturedPosts(): Promise<PostListItem[]> {
+  try {
+    return await withAuthors(await _cachedFeaturedPosts());
+  } catch {
+    return [];
+  }
+}
+
+// 관련 글: 'posts' 태그로 캐시해 상세 페이지 재생성 때 재조회하지 않고, 글이 바뀌면 웹훅으로 함께 무효화한다.
+const _cachedRelatedPosts = unstable_cache(
+  async (
+    postId: string,
+    tags: string[],
+    authorId: string | null,
+    category: string | null,
+    limit: number,
+  ): Promise<PostListItem[]> => {
+    const supabase = createStaticClient();
+
+    const orParts: string[] = [];
+    if (tags.length > 0) orParts.push(`tags.ov.{${tags.join(',')}}`);
+    if (category) orParts.push(`category.eq.${category}`);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let q: any = supabase
+      .from('posts')
+      .select(POST_LIST_FIELDS)
+      .eq('is_visible', true)
+      .neq('id', postId)
+      .order('published_at', { ascending: false, nullsFirst: false })
+      .limit(20);
+
+    if (orParts.length > 0) q = q.or(orParts.join(','));
+
+    const { data, error } = await q;
+    if (error) throw error;
+    if (!data?.length) return [];
+
+    const rows = data as Record<string, unknown>[];
+    const currentTagSet = new Set(tags);
+
+    const scored = rows.map(p => {
+      let score = 0;
+      if (authorId && p.author_id === authorId) score += 1;
+      if (category && p.category === category) score += 2;
+      score +=
+        ((p.tags as string[]) ?? []).filter(t => currentTagSet.has(t)).length *
+        2;
+      return { p, score };
+    });
+    scored.sort((a, b) => b.score - a.score);
+
+    return scored.slice(0, limit).map(x => mapToListItem(x.p));
+  },
+  ['related-posts'],
+  { revalidate: POSTS_CACHE_SECONDS, tags: ['posts'] },
 );
 
 export async function getRelatedPosts(
@@ -216,90 +318,79 @@ export async function getRelatedPosts(
   category: string | null,
   limit = 3,
 ): Promise<PostListItem[]> {
-  const supabase = createStaticClient();
-
-  const orParts: string[] = [];
-  if (tags.length > 0) orParts.push(`tags.ov.{${tags.join(',')}}`);
-  if (category) orParts.push(`category.eq.${category}`);
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let q: any = supabase
-    .from('posts')
-    .select(POST_LIST_FIELDS)
-    .eq('is_visible', true)
-    .neq('id', postId)
-    .order('published_at', { ascending: false, nullsFirst: false })
-    .limit(20);
-
-  if (orParts.length > 0) q = q.or(orParts.join(','));
-
-  const { data, error } = await q;
-  if (error || !data?.length) return [];
-
-  const rows = (data ?? []) as Record<string, unknown>[];
-  const currentTagSet = new Set(tags);
-
-  const scored = rows.map(p => {
-    let score = 0;
-    if (authorId && p.author_id === authorId) score += 1;
-    if (category && p.category === category) score += 2;
-    score +=
-      ((p.tags as string[]) ?? []).filter(t => currentTagSet.has(t)).length * 2;
-    return { p, score };
-  });
-  scored.sort((a, b) => b.score - a.score);
-
-  const top = scored.slice(0, limit).map(x => x.p);
-  const authorIds = [
-    ...new Set(top.map(p => p.author_id as string | null).filter(Boolean)),
-  ] as string[];
-  const profilesMap = await fetchAuthors(supabase, authorIds);
-
-  return top.map(p => mapToListItem(p, profilesMap));
+  try {
+    return await withAuthors(
+      await _cachedRelatedPosts(postId, tags, authorId, category, limit),
+    );
+  } catch {
+    // 관련 글 조회 실패는 본문 표시를 막지 않는다(실패 결과는 캐시되지 않음)
+    return [];
+  }
 }
 
+// 글 상세: 'posts' 태그로 캐시한다. 이 태그가 상세 페이지(ISR)에도 붙어서
+// 웹훅의 revalidateTag('posts')가 상세 페이지까지 무효화한다(이전에는 태그가 없어 60초 주기에만 의존).
+type PostRow = Omit<Post, 'author'>;
+
+const _cachedPostByNumber = unstable_cache(
+  async (postNumber: number): Promise<PostRow | null> => {
+    const supabase = createStaticClient();
+
+    const { data, error } = await supabase
+      .from('posts')
+      .select('*')
+      .eq('post_number', postNumber)
+      .eq('is_visible', true)
+      .maybeSingle();
+
+    // maybeSingle: 행이 없으면 error 없이 data === null('없는 글'로 캐시).
+    // 그 밖의 error는 일시적 DB 오류이므로 던져서 404(noindex)가 캐시되지 않게 한다(#71).
+    if (error) throwQueryError(`posts/${postNumber}`, error);
+    if (!data) return null;
+    return { ...data, tags: data.tags ?? [] } as PostRow;
+  },
+  ['post-by-number'],
+  { revalidate: POSTS_CACHE_SECONDS, tags: ['posts'] },
+);
+
+// React cache()로 같은 요청 안의 generateMetadata·페이지 중복 호출도 한 번으로 줄인다.
+// DB 오류는 던진다: ISR 재생성 중이면 이전 페이지가 유지되고, 일시 장애가 '없는 글(404)'로 캐시되지 않는다.
 export const getPostByNumber = cache(async function getPostByNumber(
   postNumber: number,
 ): Promise<Post | null> {
   // /posts/abc 같은 주소는 조회할 필요 없이 "없는 글"이다.
-  if (!Number.isSafeInteger(postNumber)) return null;
-
-  const supabase = createStaticClient();
-
-  // maybeSingle: 행이 없으면 error 없이 data === null. 그 밖의 error는
-  // 일시적 DB 오류이므로 던져서 404(noindex)가 ISR에 캐시되지 않게 한다.
-  const { data, error } = await supabase
-    .from('posts')
-    .select('*')
-    .eq('post_number', postNumber)
-    .eq('is_visible', true)
-    .maybeSingle();
-
-  if (error) throwQueryError(`posts/${postNumber}`, error);
-  if (!data) return null;
-
-  let author: Profile | undefined;
-  if (data.author_id) {
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('id, display_name, bio, avatar_url')
-      .eq('id', data.author_id)
-      .maybeSingle();
-    if (profileError) {
-      throwQueryError(`posts/${postNumber} 저자 프로필`, profileError);
-    }
-    if (profile) author = profile as Profile;
-  }
-
-  return { ...data, tags: data.tags ?? [], author } as Post;
+  if (!Number.isSafeInteger(postNumber) || postNumber <= 0) return null;
+  const post = await _cachedPostByNumber(postNumber);
+  if (!post) return null;
+  const authors = await fetchAuthors(post.author_id ? [post.author_id] : []);
+  const author = post.author_id ? authors.get(post.author_id) : undefined;
+  return { ...post, author };
 });
 
+/** 공개 글 번호 전체 (docs/ 시안 사본이 참조). 앱의 상세 페이지 사전 생성은 getRecentPostNumbers를 쓴다. */
 export async function getAllPostNumbers(): Promise<number[]> {
   const supabase = createStaticClient();
   const { data, error } = await supabase
     .from('posts')
     .select('post_number')
     .eq('is_visible', true);
+
+  if (error) return [];
+  return (data ?? []).map(p => p.post_number);
+}
+
+/** 빌드 때 미리 만들 최근 글 번호 — generateStaticParams 전용. */
+export async function getRecentPostNumbers(
+  limit = PRERENDER_POST_COUNT,
+): Promise<number[]> {
+  const supabase = createStaticClient();
+  const { data, error } = await supabase
+    .from('posts')
+    .select('post_number')
+    .eq('is_visible', true)
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false })
+    .limit(limit);
 
   if (error) return [];
   return (data ?? []).map(p => p.post_number);
