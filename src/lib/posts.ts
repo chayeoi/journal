@@ -151,88 +151,83 @@ export async function getPosts(
     page = 1,
     upToPage = 0,
   } = params;
+  // 같은 SQL 범위가 기본 목록과 첫 페이지 복원에서 별도 캐시로 쌓이지 않게 한다.
+  const restoredPage = upToPage > 1 ? upToPage : 0;
+  const effectivePage = restoredPage > 1 ? 1 : page;
   const result = await _cachedGetPosts(
     category,
     tag,
     query,
     archive,
-    page,
-    upToPage,
+    effectivePage,
+    restoredPage,
   );
   return { ...result, posts: await withAuthors(result.posts) };
 }
 
-const _cachedCategoryCounts = unstable_cache(
-  async (): Promise<CategoryCount[]> => {
+// 카테고리 개수·월별 아카이브를 한 번의 조회로 계산한다(이전: 같은 표를 두 번 읽음).
+// React cache는 같은 렌더에서 동시에 시작한 두 호출도 합친다.
+const _cachedPostFacets = unstable_cache(
+  async (): Promise<{
+    categories: CategoryCount[];
+    archives: ArchiveDate[];
+  }> => {
     const supabase = createStaticClient();
     const { data, error } = await supabase
       .from('posts')
-      .select('category')
+      .select('category, published_at')
       .eq('is_visible', true);
 
+    // DB 오류는 던져서 빈 집계가 캐시되지 않게 한다(바깥에서 빈 배열로 바꾼다).
     if (error) throw error;
 
-    const counts = new Map<string, number>();
-    let total = 0;
-    (data ?? []).forEach(p => {
-      total++;
-      if (p.category) counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
-    });
-
-    const byCategory: CategoryCount[] = CATEGORY_ORDER.filter(c =>
-      counts.has(c),
-    ).map(c => ({ category: c, count: counts.get(c)! }));
-
-    return [{ category: 'all', count: total }, ...byCategory];
-  },
-  ['category-counts'],
-  { revalidate: POSTS_CACHE_SECONDS, tags: ['posts'] },
-);
-
-export async function getCategoryCounts(): Promise<CategoryCount[]> {
-  try {
-    return await _cachedCategoryCounts();
-  } catch {
-    return [];
-  }
-}
-
-const _cachedArchiveDates = unstable_cache(
-  async (): Promise<ArchiveDate[]> => {
-    const supabase = createStaticClient();
-    const { data, error } = await supabase
-      .from('posts')
-      .select('published_at')
-      .eq('is_visible', true)
-      .not('published_at', 'is', null);
-
-    if (error) throw error;
-
-    const counts = new Map<string, number>();
-    (data ?? []).forEach(p => {
+    const categoryCounts = new Map<string, number>();
+    const monthCounts = new Map<string, number>();
+    for (const p of data ?? []) {
+      if (p.category)
+        categoryCounts.set(
+          p.category,
+          (categoryCounts.get(p.category) ?? 0) + 1,
+        );
       if (p.published_at) {
         const key = p.published_at.slice(0, 7);
-        counts.set(key, (counts.get(key) ?? 0) + 1);
+        monthCounts.set(key, (monthCounts.get(key) ?? 0) + 1);
       }
-    });
+    }
 
-    return Array.from(counts.entries())
+    const categories: CategoryCount[] = [
+      { category: 'all', count: (data ?? []).length },
+      ...CATEGORY_ORDER.filter(c => categoryCounts.has(c)).map(c => ({
+        category: c,
+        count: categoryCounts.get(c)!,
+      })),
+    ];
+    const archives = Array.from(monthCounts.entries())
       .sort(([a], [b]) => b.localeCompare(a))
       .map(([key, count]) => {
         const [y, mo] = key.split('-');
         return { key, label: `${y}년 ${parseInt(mo)}월`, count };
       });
+    return { categories, archives };
   },
-  ['archive-dates'],
+  ['post-facets'],
   { revalidate: POSTS_CACHE_SECONDS, tags: ['posts'] },
 );
 
-export async function getArchiveDates(): Promise<ArchiveDate[]> {
+const getPostFacets = cache(async () => {
   try {
-    return await _cachedArchiveDates();
+    return await _cachedPostFacets();
   } catch {
-    return [];
+    return { categories: [], archives: [] };
   }
+});
+
+export async function getCategoryCounts(): Promise<CategoryCount[]> {
+  return (await getPostFacets()).categories;
+}
+
+export async function getArchiveDates(): Promise<ArchiveDate[]> {
+  return (await getPostFacets()).archives;
 }
 
 const _cachedFeaturedPosts = unstable_cache(
