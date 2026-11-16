@@ -1,14 +1,6 @@
-/** The immutable number identifies a post; the title makes its URL readable. */
-export function getPostPath(post: {
-  post_number: number;
-  title: string;
-}): string {
-  const slug = post.title
-    .normalize('NFC')
-    .toLowerCase()
-    .replace(/[^가-힣a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-  return `/posts/${post.post_number}-${encodeURIComponent(slug || 'article')}`;
+/** Numeric URLs remain canonical, independent of the post title. */
+export function getPostPath(post: { post_number: number }): string {
+  return `/posts/${post.post_number}`;
 }
 
 export function parsePostNumber(slug: string): number | null {

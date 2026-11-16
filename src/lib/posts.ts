@@ -395,16 +395,16 @@ export async function getRecentPostNumbers(
 // 매 요청 Supabase를 직접 조회한다 (unstable_cache의 revalidate/tags 기반
 // 무효화가 Vercel 프로덕션에서 반복적으로 실측 정체된 이력 때문).
 export async function getAllPostSlugs(): Promise<
-  { post_number: number; title: string; updated_at: string }[]
+  { post_number: number; updated_at: string }[]
 > {
   const supabase = createStaticClient();
-  const rows: { post_number: number; title: string; updated_at: string }[] = [];
+  const rows: { post_number: number; updated_at: string }[] = [];
 
   for (let from = 0; ; from += SITEMAP_PAGE_SIZE) {
     const to = from + SITEMAP_PAGE_SIZE - 1;
     const { data, error } = await supabase
       .from('posts')
-      .select('post_number, title, updated_at')
+      .select('post_number, updated_at')
       .eq('is_visible', true)
       .order('post_number', { ascending: true })
       .range(from, to);
@@ -413,11 +413,7 @@ export async function getAllPostSlugs(): Promise<
     if (error) throwQueryError('sitemap posts', error);
 
     rows.push(
-      ...((data ?? []) as {
-        post_number: number;
-        title: string;
-        updated_at: string;
-      }[]),
+      ...((data ?? []) as { post_number: number; updated_at: string }[]),
     );
     if (!data || data.length < SITEMAP_PAGE_SIZE) break;
   }
