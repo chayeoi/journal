@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { getPostPath } from '@/lib/post-url';
 import type {
   Post,
   FaqItem,
@@ -109,6 +110,7 @@ export function buildPostMetadata(post: Post): Metadata {
     description,
     openGraph: {
       type: 'article',
+      url: `${SITE_URL}${getPostPath(post)}`,
       title: post.title,
       description,
       images,
@@ -127,7 +129,7 @@ export function buildPostMetadata(post: Post): Metadata {
       images: post.thumbnail_url ? [post.thumbnail_url] : undefined,
     },
     alternates: {
-      canonical: `${SITE_URL}/posts/${post.post_number}`,
+      canonical: `${SITE_URL}${getPostPath(post)}`,
     },
   };
 }
@@ -162,6 +164,7 @@ export function buildPostJsonLd(post: Post) {
     '@graph': [
       {
         '@type': 'BlogPosting',
+        url: `${SITE_URL}${getPostPath(post)}`,
         headline: post.title,
         description: excerpt || undefined,
         image: post.thumbnail_url ?? undefined,
@@ -189,7 +192,7 @@ export function buildPostJsonLd(post: Post) {
         },
         mainEntityOfPage: {
           '@type': 'WebPage',
-          '@id': `${SITE_URL}/posts/${post.post_number}`,
+          '@id': `${SITE_URL}${getPostPath(post)}`,
         },
         speakable: {
           '@type': 'SpeakableSpecification',
@@ -200,7 +203,12 @@ export function buildPostJsonLd(post: Post) {
         '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: '홈', item: SITE_URL },
-          { '@type': 'ListItem', position: 2, name: post.title },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: post.title,
+            item: `${SITE_URL}${getPostPath(post)}`,
+          },
         ],
       },
       ...faqNodes,
@@ -303,7 +311,7 @@ export function buildAuthorJsonLd(author: AuthorDetail) {
     subjectOf: author.posts.slice(0, 10).map(p => ({
       '@type': 'Article',
       headline: p.title,
-      url: `${SITE_URL}/posts/${p.post_number}`,
+      url: `${SITE_URL}${getPostPath(p)}`,
     })),
   };
 

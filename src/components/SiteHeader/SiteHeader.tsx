@@ -42,7 +42,7 @@ function SiteHeader() {
           <Link className={styles.brand} href="/">
             AUCTORITAS LAB
           </Link>
-          <span className={styles.brandTeam}>조국환 변호사팀</span>
+          <span className={styles.brandTeam}>조국환변호사팀</span>
         </span>
         <span className={styles.spacer} />
         <a className={styles.cta} href="#site-footer">

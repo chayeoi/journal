@@ -1,3 +1,4 @@
+import { getPostPath } from '@/lib/post-url';
 import { getAllPostSlugs } from '@/lib/posts';
 import { getAllAuthorIdsUncached } from '@/lib/authors';
 
@@ -58,9 +59,9 @@ export async function GET(): Promise<Response> {
       changefreq: 'weekly',
       priority: '0.7',
     })),
-    ...slugs.map(({ post_number, updated_at }) => ({
-      loc: `${SITE_URL}/posts/${post_number}`,
-      lastmod: new Date(updated_at).toISOString(),
+    ...slugs.map(post => ({
+      loc: `${SITE_URL}${getPostPath(post)}`,
+      lastmod: new Date(post.updated_at).toISOString(),
       changefreq: 'weekly',
       priority: '0.8',
     })),

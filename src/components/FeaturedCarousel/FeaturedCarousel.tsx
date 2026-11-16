@@ -5,6 +5,7 @@ import type { CSSProperties } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { tintBg } from '@/lib/coverTints';
+import { getPostPath } from '@/lib/post-url';
 import type { PostListItem } from '@/types';
 import { ICON } from '@/utils/icons';
 import { fmtDate } from '@/utils/format';
@@ -73,7 +74,7 @@ function FeaturedCarousel({ posts }: Props) {
                   ? styles.slide
                   : `${styles.slide} ${styles.slideTint}`
               }
-              href={`/posts/${post.post_number}`}
+              href={getPostPath(post)}
               aria-hidden={i !== current}
               style={
                 post.thumbnail_url
