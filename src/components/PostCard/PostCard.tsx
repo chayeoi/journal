@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { getPostPath } from '@/lib/post-url';
 import type { PostListItem } from '@/types';
 import { fmtDate } from '@/utils/format';
 import styles from './styles.css';
@@ -22,7 +23,7 @@ function PostCard({ post, showReadingTime = true }: Props) {
     >
       <Link
         className={styles.link}
-        href={`/posts/${post.post_number}`}
+        href={getPostPath(post)}
         aria-label={post.title}
       >
         {post.thumbnail_url && (

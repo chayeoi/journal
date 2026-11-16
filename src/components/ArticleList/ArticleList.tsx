@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { getPostPath } from '@/lib/post-url';
 import type { PostListItem, CategoryCount, ArchiveDate } from '@/types';
 import { ICON } from '@/utils/icons';
 import PostCard from '@/components/PostCard';
@@ -75,7 +76,7 @@ function ArticleList({
       itemListElement: posts.slice(0, 20).map((p, i) => ({
         '@type': 'ListItem',
         position: i + 1,
-        url: `${window.location.origin}/posts/${p.post_number}`,
+        url: `${window.location.origin}${getPostPath(p)}`,
         name: p.title,
       })),
     });
