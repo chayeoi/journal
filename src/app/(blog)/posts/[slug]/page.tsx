@@ -9,7 +9,7 @@ import {
   getRelatedPosts,
 } from '@/lib/posts';
 import { buildPostMetadata, buildPostJsonLd } from '@/lib/metadata';
-import { getPostPath, parsePostNumber } from '@/lib/post-url';
+import { parsePostNumber } from '@/lib/post-url';
 import { tintBg } from '@/lib/coverTints';
 import { extractHeadings, injectHeadingIds } from '@/utils/toc';
 import { fmtDate } from '@/utils/format';
@@ -33,14 +33,7 @@ type Props = { params: Promise<{ slug: string }> };
 // 나머지는 첫 방문 때 만들어 캐시한다.
 export async function generateStaticParams() {
   const numbers = await getRecentPostNumbers();
-  const posts = await Promise.all(
-    numbers.map(number => getPostByNumber(number)),
-  );
-  return posts
-    .filter(post => post !== null)
-    .map(post => ({
-      slug: decodeURIComponent(getPostPath(post).slice('/posts/'.length)),
-    }));
+  return numbers.map(number => ({ slug: String(number) }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

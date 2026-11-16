@@ -13,24 +13,11 @@ vi.mock('next/navigation', () => ({
 }));
 
 describe('post URLs', () => {
-  it('uses a stable number to avoid duplicate-title collisions and normalizes Korean titles', () => {
-    expect(
-      getPostPath({ post_number: 42, title: '추가공사대금 · 청구 요건!' }),
-    ).toBe(`/posts/42-${encodeURIComponent('추가공사대금-청구-요건')}`);
-    expect(
-      getPostPath({ post_number: 43, title: '추가공사대금 · 청구 요건!' }),
-    ).not.toBe(
-      getPostPath({ post_number: 42, title: '추가공사대금 · 청구 요건!' }),
-    );
-    expect(
-      getPostPath({ post_number: 42, title: '한글'.normalize('NFD') }),
-    ).toBe(`/posts/42-${encodeURIComponent('한글')}`);
-    expect(getPostPath({ post_number: 42, title: 'A / B ? # %' })).toBe(
-      '/posts/42-a-b',
-    );
-    expect(getPostPath({ post_number: 42, title: '!!!' })).toBe(
-      '/posts/42-article',
-    );
+  it('keeps the original numeric path regardless of title changes', () => {
+    for (const title of ['현재 제목', '바꾼 제목', '!!!']) {
+      const post = { post_number: 42, title };
+      expect(getPostPath(post)).toBe('/posts/42');
+    }
   });
   it('accepts numeric and old-title aliases but rejects ambiguous numbers', () => {
     for (const slug of ['42', '42-옛제목'])
@@ -59,22 +46,17 @@ describe('post URLs', () => {
       }),
     ).rejects.toThrow('HTTP 404');
   });
-  it('redirects numeric and old-title links to the current canonical and renders only canonical children', async () => {
+  it('serves both numeric and already-published title paths without redirecting', async () => {
     const { default: layout } =
       await import('@/app/(blog)/posts/[slug]/layout');
     getPostByNumber.mockResolvedValue({ post_number: 42, title: '현재 제목' });
-    for (const slug of ['42', '42-옛제목'])
+    // A browser may retain the old numeric -> title 308. A reverse redirect
+    // would loop forever, so both paths must render the same article.
+    for (const slug of ['42', '42-옛제목', '42-현재-제목']) {
       await expect(
         layout({ params: Promise.resolve({ slug }), children: 'article' }),
-      ).rejects.toThrow(
-        `HTTP 308 /posts/42-${encodeURIComponent('현재-제목')}`,
-      );
-    await expect(
-      layout({
-        params: Promise.resolve({ slug: '42-현재-제목' }),
-        children: 'article',
-      }),
-    ).resolves.toBe('article');
+      ).resolves.toBe('article');
+    }
   });
   it('renders percent-encoded Korean canonical params without a redirect loop', async () => {
     const { default: layout } =
